@@ -36,6 +36,9 @@ function setSchemaVersion(version) {
 function setFolderId(id) { getScriptProperties_().setProperty(PROP_KEYS.folderId, id); }
 function getFolderId() { return getScriptProperties_().getProperty(PROP_KEYS.folderId); }
 
+function setArchivesFolderId(id) { getScriptProperties_().setProperty(PROP_KEYS.archivesFolderId, id); }
+function getArchivesFolderId() { return getScriptProperties_().getProperty(PROP_KEYS.archivesFolderId); }
+
 function setSpreadsheetId_(key, id) { getScriptProperties_().setProperty(key, id); }
 function getSpreadsheetId_(key) { return getScriptProperties_().getProperty(key); }
 

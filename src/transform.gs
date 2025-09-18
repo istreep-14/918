@@ -11,7 +11,7 @@ function parseTimeControl_(tc) {
   if (tc.indexOf('+') >= 0) {
     var p = tc.split('+');
     base = p[0];
-    inc = p[1];
+    inc = Number(p[1]);
   }
   return { base: Number(base), inc: Number(inc), corr: null };
 }
@@ -20,6 +20,22 @@ function toLocalIso_(unixSeconds) {
   if (!unixSeconds && unixSeconds !== 0) return '';
   var dt = new Date(unixSeconds * 1000);
   return Utilities.formatDate(dt, getTimezone(), 'yyyy-MM-dd HH:mm:ss');
+}
+
+function pgnUtcToLocalIso_(pgnHeadersMap) {
+  var utcDate = pgnHeadersMap['UTCDate'] || pgnHeadersMap['Date'] || '';
+  var utcTime = pgnHeadersMap['UTCTime'] || pgnHeadersMap['StartTime'] || '';
+  if (!utcDate || !utcTime) return '';
+  // Normalize possible formats: Date like 2023.08.29, Time like 02:11:20 or 1:44:01 GMT+0000
+  var d = String(utcDate).replace(/\./g, '-');
+  var t = String(utcTime).split(' ')[0];
+  var iso = d + 'T' + t + 'Z';
+  try {
+    var dt = new Date(iso);
+    return Utilities.formatDate(dt, getTimezone(), 'yyyy-MM-dd HH:mm:ss');
+  } catch (e) {
+    return '';
+  }
 }
 
 function deriveType_(timeClass) {
@@ -42,10 +58,10 @@ function identityFromSides_(gameJson, myUsername) {
   var opponentColor = meIsWhite ? 'black' : 'white';
   return {
     player: {
-      username: player.username || '', color: playerColor, rating: Number(player.rating || 0), result: player.result || '', '@id': player['@id'] || '', uuid: player.uuid || ''
+      username: player.username || '', color: playerColor, rating: (player.rating != null ? Number(player.rating) : null), result: player.result || '', '@id': player['@id'] || '', uuid: player.uuid || ''
     },
     opponent: {
-      username: opponent.username || '', color: opponentColor, rating: Number(opponent.rating || 0), result: opponent.result || '', '@id': opponent['@id'] || '', uuid: opponent.uuid || ''
+      username: opponent.username || '', color: opponentColor, rating: (opponent.rating != null ? Number(opponent.rating) : null), result: opponent.result || '', '@id': opponent['@id'] || '', uuid: opponent.uuid || ''
     }
   };
 }
@@ -77,8 +93,8 @@ function makeGameRow_(gameJson, pgnHeadersMap, priorRatingByFormat, myUsername) 
   var type = typeId.type || deriveType_(gameJson.time_class);
   var id = typeId.id || '';
   var tc = parseTimeControl_(gameJson.time_control);
-  var start = gameJson.start_time ? toLocalIso_(gameJson.start_time) : '';
-  var end = gameJson.end_time ? toLocalIso_(gameJson.end_time) : '';
+  var start = gameJson.start_time ? toLocalIso_(gameJson.start_time) : pgnUtcToLocalIso_(pgnHeadersMap);
+  var end = gameJson.end_time ? toLocalIso_(gameJson.end_time) : (pgnHeadersMap['EndDate'] || pgnHeadersMap['EndTime'] ? pgnUtcToLocalIso_({ UTCDate: pgnHeadersMap['EndDate'], UTCTime: pgnHeadersMap['EndTime'] }) : '');
   var duration = (gameJson.end_time && gameJson.start_time) ? (Number(gameJson.end_time) - Number(gameJson.start_time)) : '';
   var rules = gameJson.rules || 'chess';
   var timeClass = gameJson.time_class || '';
@@ -103,7 +119,7 @@ function makeGameRow_(gameJson, pgnHeadersMap, priorRatingByFormat, myUsername) 
     timeClass, rules, format,
     (pgnHeadersMap['Event'] || ''), (pgnHeadersMap['Site'] || ''), (pgnHeadersMap['Date'] || ''), (pgnHeadersMap['Round'] || ''), (pgnHeadersMap['White'] || ''), (pgnHeadersMap['Black'] || ''), (pgnHeadersMap['Result'] || ''), (pgnHeadersMap['ECO'] || ''), (pgnHeadersMap['ECOUrl'] || ''), (pgnHeadersMap['TimeControl'] || ''), (pgnHeadersMap['Termination'] || ''), (pgnHeadersMap['StartTime'] || ''), (pgnHeadersMap['EndDate'] || ''), (pgnHeadersMap['EndTime'] || ''), (pgnHeadersMap['Link'] || ''),
     ident.player.username, ident.player.color, ident.player.rating, rc.last, rc.change, ident.player.result, outcome, playerScore, ident.player['@id'], ident.player.uuid,
-    ident.opponent.username, ident.opponent.color, ident.opponent.rating, (ident.opponent.rating - (rc.change || 0)), (rc.change != null ? -rc.change : null), ident.opponent.result, deriveOutcome_(ident.opponent.result), scoreFromOutcome_(deriveOutcome_(ident.opponent.result)), ident.opponent['@id'], ident.opponent.uuid,
+    ident.opponent.username, ident.opponent.color, ident.opponent.rating, (rc.change != null && ident.opponent.rating != null ? (ident.opponent.rating - rc.change) : null), (rc.change != null ? -rc.change : null), ident.opponent.result, deriveOutcome_(ident.opponent.result), scoreFromOutcome_(deriveOutcome_(ident.opponent.result)), ident.opponent['@id'], ident.opponent.uuid,
     false
   ];
   return row;
