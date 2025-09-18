@@ -16,6 +16,8 @@ var PROP_KEYS = {
   dailyTotalsActiveSpreadsheetId: 'DAILY_TOTALS_ACTIVE_SPREADSHEET_ID',
   callbacksQueueSpreadsheetId: 'CALLBACKS_QUEUE_SPREADSHEET_ID',
   callbacksResultsSpreadsheetId: 'CALLBACKS_RESULTS_SPREADSHEET_ID',
+  openingsQueueSpreadsheetId: 'OPENINGS_QUEUE_SPREADSHEET_ID',
+  openingsResultsSpreadsheetId: 'OPENINGS_RESULTS_SPREADSHEET_ID',
   opsSpreadsheetId: 'OPS_SPREADSHEET_ID',
   archivesMetaSpreadsheetId: 'ARCHIVES_META_SPREADSHEET_ID',
   username: 'USERNAME',
@@ -35,6 +37,8 @@ var SHEET_NAMES = {
   dailyTotals: 'DailyTotals',
   callbacksQueue: 'CallbacksQueue',
   callbacksResults: 'CallbacksResults',
+  openingsQueue: 'OpeningsQueue',
+  openingsResults: 'OpeningsResults',
   analysisQueue: 'AnalysisQueue',
   analysisResults: 'AnalysisResults',
   profile: 'Profile',
@@ -132,6 +136,10 @@ var DAILY_TOTALS_HEADERS = [
 /** Callbacks queue and results headers */
 var CALLBACKS_QUEUE_HEADERS = [ 'url', 'type', 'id', 'enqueued_at_iso', 'status', 'last_attempt_iso', 'attempts' ];
 var CALLBACKS_RESULTS_HEADERS = [ 'url', 'type', 'id', 'exact_rating_change', 'pregame_rating', 'moveTimestamps', 'captured_at_iso' ];
+
+/** Openings queue and results headers */
+var OPENINGS_QUEUE_HEADERS = [ 'url', 'eco_code', 'eco_name', 'enqueued_at_iso', 'status', 'last_attempt_iso', 'attempts' ];
+var OPENINGS_RESULTS_HEADERS = [ 'url', 'eco_code', 'eco_name', 'clean_url', 'fen', 'is_starting_position', 'eval', 'number_of_games', 'children_json', 'captured_at_iso' ];
 
 /** Ops sheets headers */
 var OPS_META_HEADERS = [ 'key', 'value' ];
