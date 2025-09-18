@@ -105,6 +105,7 @@ function makeGameRow_(gameJson, pgnHeadersMap, priorRatingByFormat, myUsername) 
   var playerScore = scoreFromOutcome_(outcome);
 
   var priorKey = format;
+  // Seed prior rating from previously ingested rows if not present in-memory
   var prior = priorRatingByFormat[priorKey];
   var rc = ratingLastAndChange_(prior, ident.player.rating);
 
@@ -119,7 +120,7 @@ function makeGameRow_(gameJson, pgnHeadersMap, priorRatingByFormat, myUsername) 
     timeClass, rules, format,
     (pgnHeadersMap['Event'] || ''), (pgnHeadersMap['Site'] || ''), (pgnHeadersMap['Date'] || ''), (pgnHeadersMap['Round'] || ''), (pgnHeadersMap['White'] || ''), (pgnHeadersMap['Black'] || ''), (pgnHeadersMap['Result'] || ''), (pgnHeadersMap['ECO'] || ''), (pgnHeadersMap['ECOUrl'] || ''), (pgnHeadersMap['TimeControl'] || ''), (pgnHeadersMap['Termination'] || ''), (pgnHeadersMap['StartTime'] || ''), (pgnHeadersMap['EndDate'] || ''), (pgnHeadersMap['EndTime'] || ''), (pgnHeadersMap['Link'] || ''),
     ident.player.username, ident.player.color, ident.player.rating, rc.last, rc.change, ident.player.result, outcome, playerScore, ident.player['@id'], ident.player.uuid,
-    ident.opponent.username, ident.opponent.color, ident.opponent.rating, (rc.change != null && ident.opponent.rating != null ? (ident.opponent.rating - rc.change) : null), (rc.change != null ? -rc.change : null), ident.opponent.result, deriveOutcome_(ident.opponent.result), scoreFromOutcome_(deriveOutcome_(ident.opponent.result)), ident.opponent['@id'], ident.opponent.uuid,
+    ident.opponent.username, ident.opponent.color, ident.opponent.rating, (rc.last != null && ident.opponent.rating != null ? (ident.opponent.rating - (ident.player.rating != null && rc.last != null ? (ident.player.rating - rc.last) : 0)) : null), (rc.change != null ? -rc.change : null), ident.opponent.result, deriveOutcome_(ident.opponent.result), scoreFromOutcome_(deriveOutcome_(ident.opponent.result)), ident.opponent['@id'], ident.opponent.uuid,
     false
   ];
   return row;

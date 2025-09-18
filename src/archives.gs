@@ -64,6 +64,8 @@ function ingestArchiveMonth(archiveUrl) {
   var lastModified = (res.headers && (res.headers['last-modified'])) || '';
   var status = (isCurrentOrFutureMonth_(yyyy, mm) ? 'active' : 'inactive');
   upsertArchivesMetaRow_(archiveUrl, yyyy, mm, newEtag, lastModified, games.length, status, gamesSeen, appended);
+  // Aggregate progress totals
+  updateArchivesProgress_(archiveUrl, yyyy, mm, gamesSeen, appended);
   return { status: 'ok', appended: appended, seen: gamesSeen };
 }
 
@@ -81,8 +83,31 @@ function ingestGamesArray_(yyyy, mm, games) {
   var sheet = ss.getSheetByName(SHEET_NAMES.games);
   var urlIndex = buildUrlIndex_(sheet);
 
-  // naive prior-rating map per format (estimate); for speed keep in memory per-run
+  // Determine column indices from headers to avoid off-by-one mistakes
+  var FORMAT_INDEX = GAME_HEADERS.indexOf('format');
+  var PLAYER_RATING_INDEX = GAME_HEADERS.indexOf('player.rating');
+
+  // Seed prior ratings per format from existing sheet rows (last known rating)
   var priorByFormat = {};
+  var lastRowExisting = sheet.getLastRow();
+  if (lastRowExisting >= 2) {
+    var existing = sheet.getRange(2, 1, lastRowExisting - 1, GAME_HEADERS.length).getValues();
+    for (var e = 0; e < existing.length; e++) {
+      var fmtE = existing[e][FORMAT_INDEX];
+      var prE = existing[e][PLAYER_RATING_INDEX];
+      if (fmtE && prE != null && prE !== '') {
+        priorByFormat[fmtE] = Number(prE);
+      }
+    }
+  }
+
+  // Sort input games chronologically by end_time (fallback to start_time)
+  games.sort(function(a, b) {
+    function ts(g) {
+      return (g && (g.end_time || g.start_time)) ? Number(g.end_time || g.start_time) : 0;
+    }
+    return ts(a) - ts(b);
+  });
 
   var rows = [];
   for (var i = 0; i < games.length; i++) {
@@ -93,8 +118,8 @@ function ingestGamesArray_(yyyy, mm, games) {
     var row = makeGameRow_(g, pgnMap, priorByFormat, username);
     rows.push(row);
     // update prior map for player's rating by format, keyed by format
-    var fmt = row[19]; // 'format' index in GAME_HEADERS
-    var playerRating = row[36];
+    var fmt = row[FORMAT_INDEX];
+    var playerRating = row[PLAYER_RATING_INDEX];
     priorByFormat[fmt] = playerRating;
   }
 
@@ -113,14 +138,24 @@ function backfillAllArchives() {
     if (m) ensureArchiveSpreadsheet_(m[1], m[2]);
   }
   var start = new Date().getTime();
-  for (var j = 0; j < list.length; j++) {
+  var idx = getBackfillCursorIndex();
+  if (idx < 0 || idx >= list.length) idx = 0;
+  upsertOpsMeta_('BACKFILL_LAST_AT_ISO', isoNow());
+  for (var j = idx; j < list.length; j++) {
     var url = list[j];
+    upsertOpsMeta_('BACKFILL_NEXT_URL', url);
+    upsertOpsMeta_('BACKFILL_LAST_IDX', String(j));
     var res = ingestArchiveMonth(url);
     logInfo('BACKFILL_MONTH', 'Ingested ' + url, res);
+    setBackfillCursorIndex(j + 1);
     if (new Date().getTime() - start > 5 * 60 * 1000) {
-      logWarn('BACKFILL_TIME', 'Stopping early due to time limit', { processed: j + 1 });
-      break;
+      logWarn('BACKFILL_TIME', 'Stopping early due to time limit', { processed: (j - idx + 1), nextIndex: j + 1 });
+      SpreadsheetApp.flush();
+      return; // resumable next run
     }
     if ((j + 1) % 5 === 0) SpreadsheetApp.flush();
   }
+  // Completed all archives; reset cursor
+  setBackfillCursorIndex(0);
+  upsertOpsMeta_('BACKFILL_NEXT_URL', '');
 }

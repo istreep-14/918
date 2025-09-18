@@ -27,6 +27,7 @@ var PROP_KEYS = {
 var SHEET_NAMES = {
   games: 'Games',
   archivesMeta: 'ArchivesMeta',
+  archivesProgress: 'ArchivesProgress',
   opsMeta: 'OpsMeta',
   logs: 'Logs',
   metrics: 'Metrics',
@@ -103,6 +104,11 @@ var GAME_HEADERS = [
 /** Archives meta headers */
 var ARCHIVES_META_HEADERS = [
   'archive_url', 'yyyy', 'mm', 'etag', 'last_modified', 'last_checked', 'games_count', 'status', 'callback_progress', 'games_seen', 'games_appended'
+];
+
+/** Archives progress headers (aggregated totals across runs) */
+var ARCHIVES_PROGRESS_HEADERS = [
+  'archive_url', 'yyyy', 'mm', 'total_seen', 'total_appended', 'last_checked_iso'
 ];
 
 /** Game index headers for cross-sheet updates */

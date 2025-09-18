@@ -52,3 +52,33 @@ function appendRowsWithIndex_(ss, rows) {
   indexSheet.getRange(indexSheet.getLastRow() + 1, 1, indexRows.length, indexRows[0].length).setValues(indexRows);
   return rows.length;
 }
+
+/** Update ArchivesProgress aggregates */
+function updateArchivesProgress_(archiveUrl, yyyy, mm, seenDelta, appendedDelta) {
+  try {
+    var id = getArchivesMetaSpreadsheetId();
+    if (!id) return;
+    var ss = SpreadsheetApp.openById(id);
+    var sheet = getOrCreateSheet_(ss, SHEET_NAMES.archivesProgress);
+    ensureHeaders_(sheet, ARCHIVES_PROGRESS_HEADERS);
+    var lastRow = sheet.getLastRow();
+    var foundRow = -1;
+    if (lastRow >= 2) {
+      var rng = sheet.getRange(2, 1, lastRow - 1, ARCHIVES_PROGRESS_HEADERS.length).getValues();
+      for (var i = 0; i < rng.length; i++) {
+        if (rng[i][0] === archiveUrl) { foundRow = i + 2; break; }
+      }
+    }
+    var nowIso = isoNow();
+    if (foundRow > 0) {
+      var existing = sheet.getRange(foundRow, 1, 1, ARCHIVES_PROGRESS_HEADERS.length).getValues()[0];
+      var totalSeen = Number(existing[3] || 0) + (seenDelta || 0);
+      var totalAppended = Number(existing[4] || 0) + (appendedDelta || 0);
+      sheet.getRange(foundRow, 1, 1, ARCHIVES_PROGRESS_HEADERS.length).setValues([[archiveUrl, yyyy, mm, totalSeen, totalAppended, nowIso]]);
+    } else {
+      sheet.appendRow([archiveUrl, yyyy, mm, (seenDelta || 0), (appendedDelta || 0), nowIso]);
+    }
+  } catch (e) {
+    logWarn('ARCHIVES_PROGRESS', 'Failed to update ArchivesProgress', { url: archiveUrl, error: String(e) });
+  }
+}
