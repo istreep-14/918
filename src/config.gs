@@ -60,6 +60,38 @@ function getOpsSpreadsheetId() { return getSpreadsheetId_(PROP_KEYS.opsSpreadshe
 function setArchivesMetaSpreadsheetId(id) { setSpreadsheetId_(PROP_KEYS.archivesMetaSpreadsheetId, id); }
 function getArchivesMetaSpreadsheetId() { return getSpreadsheetId_(PROP_KEYS.archivesMetaSpreadsheetId); }
 
+/** Backfill cursor helpers */
+function getBackfillCursorIndex() {
+  var v = getScriptProperties_().getProperty('BACKFILL_CURSOR_INDEX');
+  return v ? Number(v) : 0;
+}
+
+function setBackfillCursorIndex(idx) {
+  getScriptProperties_().setProperty('BACKFILL_CURSOR_INDEX', String(idx));
+}
+
+/** OpsMeta helpers (simple key/value in Ops spreadsheet) */
+function upsertOpsMeta_(key, value) {
+  var opsId = getOpsSpreadsheetId();
+  if (!opsId) return;
+  var ss = SpreadsheetApp.openById(opsId);
+  var sheet = getOrCreateSheet_(ss, SHEET_NAMES.opsMeta);
+  ensureHeaders_(sheet, OPS_META_HEADERS);
+  var lastRow = sheet.getLastRow();
+  var found = -1;
+  if (lastRow >= 2) {
+    var vals = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+    for (var i = 0; i < vals.length; i++) {
+      if (vals[i][0] === key) { found = i + 2; break; }
+    }
+  }
+  if (found > 0) {
+    sheet.getRange(found, 2, 1, 1).setValue(value);
+  } else {
+    sheet.appendRow([key, value]);
+  }
+}
+
 /** Per-archive cursors (stored as JSON in script properties) */
 function getArchiveCursors() {
   var raw = getScriptProperties_().getProperty('ARCHIVE_CURSORS');
