@@ -5,6 +5,7 @@ Core game ingestion (official, stable)
     Use once to discover all {YYYY}/{MM} URLs for full backfill.
 Monthly archive: https://api.chess.com/pub/player/{username}/games/{YYYY}/{MM}
     Primary source for every game’s canonical metadata and PGN. Parse PGN headers for ECO/Openings, termination, etc.
+    INFO https://github.com/istreep-14/918/blob/main/games.md
 
 
 Profile & stats snapshots (official, stable)
