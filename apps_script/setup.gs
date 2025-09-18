@@ -66,3 +66,56 @@ function provisionControlAndArchives_(folderName, yearsArray) {
 
   return { folderId: folder.getId(), controlId: control.getId() };
 }
+
+// ------------------------------
+// Easy entry points
+// ------------------------------
+
+function setUsernames(username, myUsername) {
+  var props = PropertiesService.getDocumentProperties();
+  if (username) props.setProperty(PROP_KEYS.USERNAME, String(username));
+  if (myUsername) props.setProperty(PROP_KEYS.MY_USERNAME, String(myUsername));
+  if (username && !myUsername) props.setProperty(PROP_KEYS.MY_USERNAME, String(username));
+}
+
+function setupProject() {
+  var year = new Date().getFullYear();
+  return provisionControlAndArchives_('Chess Sheets', [year]);
+}
+
+function setupProjectWithRange(folderName, startYear, endYear) {
+  var f = folderName || 'Chess Sheets';
+  var s = Number(startYear || new Date().getFullYear());
+  var e = Number(endYear || s);
+  if (e < s) e = s;
+  var years = [];
+  for (var y = s; y <= e; y++) years.push(y);
+  return provisionControlAndArchives_(f, years);
+}
+
+function quickSetup(username, folderName) {
+  setUsernames(username, username);
+  return setupProjectWithRange(folderName || 'Chess Sheets', new Date().getFullYear(), new Date().getFullYear());
+}
+
+function onOpen() {
+  try {
+    var ui = SpreadsheetApp.getUi();
+    ui.createMenu('Chess Pipeline')
+      .addItem('Setup Project (default)', 'setupProject')
+      .addSeparator()
+      .addItem('Ingest Active Month', 'ingestActiveMonthOnce')
+      .addItem('Finalize Previous Month If Ready', 'finalizePreviousMonthIfReady_')
+      .addItem('Health Check', 'writeHealth_')
+      .addSeparator()
+      .addItem('Seed Daily Totals (this month)', 'menuSeedDailyTotals_')
+      .addToUi();
+  } catch (e) {}
+}
+
+function menuSeedDailyTotals_() {
+  var active = getActiveMonth_();
+  var yyyy = active.substring(0,4);
+  var mm = active.substring(5,7);
+  seedDailyTotalsForNewMonth_(yyyy, mm);
+}
