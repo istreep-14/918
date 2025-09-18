@@ -7,7 +7,7 @@ function fetchAndStoreProfile() {
   var json = res.json;
   var joinedIso = json.joined ? Utilities.formatDate(new Date(json.joined * 1000), getTimezone(), 'yyyy-MM-dd HH:mm:ss') : '';
   var ss = SpreadsheetApp.openById(getOpsSpreadsheetId());
-  var sheet = ss.getSheetByName(SHEET_NAMES.profile);
+  var sheet = getOrCreateSheet_(ss, SHEET_NAMES.profile);
   ensureHeaders_(sheet, PROFILE_HEADERS);
   sheet.clear();
   sheet.getRange(1,1,1,PROFILE_HEADERS.length).setValues([PROFILE_HEADERS]);
@@ -19,7 +19,7 @@ function fetchAndAppendPlayerStats() {
   var res = httpFetchJson(ENDPOINTS.stats(username), {});
   if (!(res.status >= 200 && res.status < 300) || !res.json) throw new Error('Stats fetch failed');
   var json = res.json;
-  var sheet = SpreadsheetApp.openById(getOpsSpreadsheetId()).getSheetByName(SHEET_NAMES.playerStatsTimeline);
+  var sheet = getOrCreateSheet_(SpreadsheetApp.openById(getOpsSpreadsheetId()), SHEET_NAMES.playerStatsTimeline);
   ensureHeaders_(sheet, PLAYER_STATS_TIMELINE_HEADERS);
   var ts = isoNow();
   function appendMetric(tc, obj) {

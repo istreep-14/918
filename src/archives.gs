@@ -11,7 +11,7 @@ function fetchArchivesList_() {
 
 function upsertArchivesMetaRow_(archiveUrl, yyyy, mm, etag, lastModified, gamesCount, status) {
   var ss = SpreadsheetApp.openById(getArchivesMetaSpreadsheetId());
-  var sheet = ss.getSheetByName(SHEET_NAMES.archivesMeta);
+  var sheet = getOrCreateSheet_(ss, SHEET_NAMES.archivesMeta);
   ensureHeaders_(sheet, ARCHIVES_META_HEADERS);
   var lastRow = sheet.getLastRow();
   var foundRow = -1;
@@ -31,7 +31,8 @@ function upsertArchivesMetaRow_(archiveUrl, yyyy, mm, etag, lastModified, gamesC
 
 function getStoredEtagForArchive_(archiveUrl) {
   var ss = SpreadsheetApp.openById(getArchivesMetaSpreadsheetId());
-  var sheet = ss.getSheetByName(SHEET_NAMES.archivesMeta);
+  var sheet = getOrCreateSheet_(ss, SHEET_NAMES.archivesMeta);
+  ensureHeaders_(sheet, ARCHIVES_META_HEADERS);
   var lastRow = sheet.getLastRow();
   if (lastRow < 2) return null;
   var data = sheet.getRange(2, 1, lastRow - 1, ARCHIVES_META_HEADERS.length).getValues();

@@ -83,12 +83,15 @@ function generateContinuousDates_(fromDate, toDate) {
 }
 
 function refreshDailyTotalsActive() {
-  var ss = SpreadsheetApp.openById(getDailyTotalsActiveSpreadsheetId());
-  var sheet = ss.getSheetByName(SHEET_NAMES.dailyTotals);
+  var id = getDailyTotalsActiveSpreadsheetId();
+  if (!id) return;
+  var ss = SpreadsheetApp.openById(id);
+  var sheet = getOrCreateSheet_(ss, SHEET_NAMES.dailyTotals);
   ensureHeaders_(sheet, DAILY_TOTALS_HEADERS);
 
   // From account creation date to today if available; else from first of prior month
-  var profileSheet = SpreadsheetApp.openById(getOpsSpreadsheetId()).getSheetByName(SHEET_NAMES.profile);
+  var opsId = getOpsSpreadsheetId();
+  var profileSheet = opsId ? SpreadsheetApp.openById(opsId).getSheetByName(SHEET_NAMES.profile) : null;
   var joinedDate = null;
   if (profileSheet && profileSheet.getLastRow() >= 2) {
     var val = profileSheet.getRange(2, 4).getValue(); // joined_iso
