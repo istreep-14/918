@@ -128,6 +128,12 @@ function ingestGamesArray_(yyyy, mm, games) {
 
   if (rows.length > 0) {
     appendRowsWithIndex_(ss, rows);
+    // Also enqueue callbacks for these newly appended games (backfill and live)
+    try {
+      enqueueCallbacksForRows_(rows);
+    } catch (e) {
+      logWarn('ENQUEUE_CALLBACKS', 'Failed to enqueue callbacks for appended rows', { yyyy: yyyy, mm: mm, rows: rows.length, error: String(e) });
+    }
   }
   metricRecord('archive_rows_appended', rows.length, { yyyy: yyyy, mm: mm });
   return rows.length;
