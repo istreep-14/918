@@ -38,6 +38,34 @@ function pgnUtcToLocalIso_(pgnHeadersMap) {
   }
 }
 
+function parseLocalDateTimeString_(yyyyMmDdHhMmSs) {
+  if (!yyyyMmDdHhMmSs) return null;
+  // Format: yyyy-MM-dd HH:mm:ss
+  var parts = String(yyyyMmDdHhMmSs).split(/[\- :]/);
+  if (parts.length < 6) return null;
+  var y = Number(parts[0]);
+  var m = Number(parts[1]) - 1;
+  var d = Number(parts[2]);
+  var hh = Number(parts[3]);
+  var mm = Number(parts[4]);
+  var ss = Number(parts[5]);
+  return new Date(y, m, d, hh, mm, ss);
+}
+
+function computeDurationSeconds_(startIsoLocal, endIsoLocal, gameJson) {
+  // Prefer raw unix timestamps when both are present
+  if (gameJson && gameJson.start_time && gameJson.end_time) {
+    return Math.max(0, Number(gameJson.end_time) - Number(gameJson.start_time));
+  }
+  // Fallback: parse the formatted local timestamps
+  var s = parseLocalDateTimeString_(startIsoLocal);
+  var e = parseLocalDateTimeString_(endIsoLocal);
+  if (s && e) {
+    return Math.max(0, Math.floor((e.getTime() - s.getTime()) / 1000));
+  }
+  return '';
+}
+
 function deriveType_(timeClass) {
   return timeClass === 'daily' ? 'daily' : 'live';
 }
@@ -95,7 +123,7 @@ function makeGameRow_(gameJson, pgnHeadersMap, priorRatingByFormat, myUsername) 
   var tc = parseTimeControl_(gameJson.time_control);
   var start = gameJson.start_time ? toLocalIso_(gameJson.start_time) : pgnUtcToLocalIso_(pgnHeadersMap);
   var end = gameJson.end_time ? toLocalIso_(gameJson.end_time) : (pgnHeadersMap['EndDate'] || pgnHeadersMap['EndTime'] ? pgnUtcToLocalIso_({ UTCDate: pgnHeadersMap['EndDate'], UTCTime: pgnHeadersMap['EndTime'] }) : '');
-  var duration = (gameJson.end_time && gameJson.start_time) ? (Number(gameJson.end_time) - Number(gameJson.start_time)) : '';
+  var duration = computeDurationSeconds_(start, end, gameJson);
   var rules = gameJson.rules || 'chess';
   var timeClass = gameJson.time_class || '';
   var format = deriveFormat_(rules, timeClass, type);
@@ -103,6 +131,14 @@ function makeGameRow_(gameJson, pgnHeadersMap, priorRatingByFormat, myUsername) 
   var ident = identityFromSides_(gameJson, myUsername);
   var outcome = deriveOutcome_(ident.player.result);
   var playerScore = scoreFromOutcome_(outcome);
+  var endReason = (function(){
+    var pr = ident.player.result || '';
+    var or = ident.opponent.result || '';
+    if (pr === 'win') return or || '';
+    if (or === 'win') return pr || '';
+    if (pr && or && pr === or) return pr; // draw codes
+    return pr || or || '';
+  })();
 
   var priorKey = format;
   // Seed prior rating from previously ingested rows if not present in-memory
@@ -118,9 +154,10 @@ function makeGameRow_(gameJson, pgnHeadersMap, priorRatingByFormat, myUsername) 
     gameJson.accuracies ? Number(gameJson.accuracies.black || '') : '',
     gameJson.tcn || '', gameJson.uuid || '', gameJson.initial_setup || '', gameJson.fen || '',
     timeClass, rules, format,
-    (pgnHeadersMap['Event'] || ''), (pgnHeadersMap['Site'] || ''), (pgnHeadersMap['Date'] || ''), (pgnHeadersMap['Round'] || ''), (pgnHeadersMap['White'] || ''), (pgnHeadersMap['Black'] || ''), (pgnHeadersMap['Result'] || ''), (pgnHeadersMap['ECO'] || ''), (pgnHeadersMap['ECOUrl'] || ''), (pgnHeadersMap['TimeControl'] || ''), (pgnHeadersMap['Termination'] || ''), (pgnHeadersMap['StartTime'] || ''), (pgnHeadersMap['EndDate'] || ''), (pgnHeadersMap['EndTime'] || ''), (pgnHeadersMap['Link'] || ''),
+    (pgnHeadersMap['ECO'] || ''), (pgnHeadersMap['ECOUrl'] || ''),
     ident.player.username, ident.player.color, ident.player.rating, rc.last, rc.change, ident.player.result, outcome, playerScore, ident.player['@id'], ident.player.uuid,
     ident.opponent.username, ident.opponent.color, ident.opponent.rating, (rc.last != null && ident.opponent.rating != null ? (ident.opponent.rating - (ident.player.rating != null && rc.last != null ? (ident.player.rating - rc.last) : 0)) : null), (rc.change != null ? -rc.change : null), ident.opponent.result, deriveOutcome_(ident.opponent.result), scoreFromOutcome_(deriveOutcome_(ident.opponent.result)), ident.opponent['@id'], ident.opponent.uuid,
+    endReason,
     false
   ];
   return row;
