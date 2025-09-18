@@ -2,13 +2,16 @@
 
 function enqueueCallbacksForRecentGames(limit) {
   var activeId = getGamesActiveSpreadsheetId();
+  if (!activeId) return 0;
   var ss = SpreadsheetApp.openById(activeId);
-  var sheet = ss.getSheetByName(SHEET_NAMES.games);
+  var sheet = getOrCreateSheet_(ss, SHEET_NAMES.games);
   var lastRow = sheet.getLastRow();
   if (lastRow < 2) return 0;
   var data = sheet.getRange(Math.max(2, lastRow - 500), 1, Math.min(500, lastRow - 1), 3).getValues(); // url,type,id
   var queued = 0;
-  var q = SpreadsheetApp.openById(getCallbacksQueueSpreadsheetId()).getSheetByName(SHEET_NAMES.callbacksQueue);
+  var qId = getCallbacksQueueSpreadsheetId();
+  if (!qId) return queued;
+  var q = getOrCreateSheet_(SpreadsheetApp.openById(qId), SHEET_NAMES.callbacksQueue);
   ensureHeaders_(q, CALLBACKS_QUEUE_HEADERS);
   var nowIso = isoNow();
   for (var i = 0; i < data.length && queued < (limit || 50); i++) {
@@ -21,8 +24,12 @@ function enqueueCallbacksForRecentGames(limit) {
 }
 
 function processCallbacksBatch(maxBatch) {
-  var qSheet = SpreadsheetApp.openById(getCallbacksQueueSpreadsheetId()).getSheetByName(SHEET_NAMES.callbacksQueue);
-  var rSheet = SpreadsheetApp.openById(getCallbacksResultsSpreadsheetId()).getSheetByName(SHEET_NAMES.callbacksResults);
+  var qId = getCallbacksQueueSpreadsheetId();
+  if (!qId) return 0;
+  var rId = getCallbacksResultsSpreadsheetId();
+  if (!rId) return 0;
+  var qSheet = getOrCreateSheet_(SpreadsheetApp.openById(qId), SHEET_NAMES.callbacksQueue);
+  var rSheet = getOrCreateSheet_(SpreadsheetApp.openById(rId), SHEET_NAMES.callbacksResults);
   ensureHeaders_(qSheet, CALLBACKS_QUEUE_HEADERS);
   ensureHeaders_(rSheet, CALLBACKS_RESULTS_HEADERS);
   var lastRow = qSheet.getLastRow();
@@ -67,6 +74,7 @@ function tryUpdateGameExact_(url, exactChange) {
     var ss = getArchiveSpreadsheetByMonth_(months[i].yyyy, months[i].mm);
     if (!ss) continue;
     var sheet = ss.getSheetByName(SHEET_NAMES.games);
+    if (!sheet) continue;
     var lastRow = sheet.getLastRow();
     if (lastRow < 2) continue;
     var urls = sheet.getRange(2, 1, lastRow - 1, 1).getValues();

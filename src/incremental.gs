@@ -15,7 +15,7 @@ function updateActiveMirror_() {
   var activeId = getGamesActiveSpreadsheetId();
   if (!activeId) return;
   var activeSs = SpreadsheetApp.openById(activeId);
-  var activeSheet = activeSs.getSheetByName(SHEET_NAMES.games);
+  var activeSheet = getOrCreateSheet_(activeSs, SHEET_NAMES.games);
   ensureHeaders_(activeSheet, GAME_HEADERS);
 
   // Rebuild mirror from current month archive only for speed
