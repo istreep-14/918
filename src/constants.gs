@@ -18,6 +18,8 @@ var PROP_KEYS = {
   callbacksResultsSpreadsheetId: 'CALLBACKS_RESULTS_SPREADSHEET_ID',
   opsSpreadsheetId: 'OPS_SPREADSHEET_ID',
   archivesMetaSpreadsheetId: 'ARCHIVES_META_SPREADSHEET_ID',
+  masterArchiveSpreadsheetId: 'MASTER_ARCHIVE_SPREADSHEET_ID',
+  archiveStorageMode: 'ARCHIVE_STORAGE_MODE', // 'monthly' (default) or 'single'
   username: 'USERNAME',
   timezone: 'TIMEZONE',
   schemaVersion: 'SCHEMA_VERSION'
@@ -131,7 +133,17 @@ var DAILY_TOTALS_HEADERS = [
 
 /** Callbacks queue and results headers */
 var CALLBACKS_QUEUE_HEADERS = [ 'url', 'type', 'id', 'enqueued_at_iso', 'status', 'last_attempt_iso', 'attempts' ];
-var CALLBACKS_RESULTS_HEADERS = [ 'url', 'type', 'id', 'exact_rating_change', 'pregame_rating', 'moveTimestamps', 'captured_at_iso' ];
+var CALLBACKS_RESULTS_HEADERS = [
+  'url', 'type', 'id',
+  'ratingChangeWhite', 'ratingChangeBlack',
+  'whiteUsername', 'blackUsername',
+  'whiteId', 'blackId',
+  'whiteUuid', 'blackUuid',
+  'whitePregameRating', 'blackPregameRating',
+  'moveTimestamps',
+  'opponent.countryName', 'opponent.membershipCode', 'opponent.memberSince', 'opponent.postMoveAction', 'opponent.defaultTab',
+  'captured_at_iso'
+];
 
 /** Ops sheets headers */
 var OPS_META_HEADERS = [ 'key', 'value' ];

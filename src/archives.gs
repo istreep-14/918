@@ -128,6 +128,12 @@ function ingestGamesArray_(yyyy, mm, games) {
 
   if (rows.length > 0) {
     appendRowsWithIndex_(ss, rows);
+    // Also enqueue callbacks for these newly appended games (backfill and live)
+    try {
+      enqueueCallbacksForRows_(rows);
+    } catch (e) {
+      logWarn('ENQUEUE_CALLBACKS', 'Failed to enqueue callbacks for appended rows', { yyyy: yyyy, mm: mm, rows: rows.length, error: String(e) });
+    }
   }
   metricRecord('archive_rows_appended', rows.length, { yyyy: yyyy, mm: mm });
   return rows.length;
@@ -136,17 +142,21 @@ function ingestGamesArray_(yyyy, mm, games) {
 /** Seed prior ratings map from previous month sheet to maintain cross-month continuity */
 function seedPriorRatingsFromPreviousMonth_(yyyy, mm, priorByFormat) {
   try {
-    var prev = previousMonth_(yyyy, mm);
-    var prevSs = getArchiveSpreadsheetByMonth_(prev.yyyy, prev.mm);
-    if (!prevSs) return;
-    var sheet = prevSs.getSheetByName(SHEET_NAMES.games);
+    var FORMAT_INDEX = GAME_HEADERS.indexOf('format');
+    var PLAYER_RATING_INDEX = GAME_HEADERS.indexOf('player.rating');
+    var targetSs;
+    if (getArchiveStorageMode() === 'single') {
+      targetSs = getOrCreateMasterArchive_();
+    } else {
+      var prev = previousMonth_(yyyy, mm);
+      targetSs = getArchiveSpreadsheetByMonth_(prev.yyyy, prev.mm);
+    }
+    if (!targetSs) return;
+    var sheet = targetSs.getSheetByName(SHEET_NAMES.games);
     if (!sheet) return;
     var lastRow = sheet.getLastRow();
     if (lastRow < 2) return;
-    var FORMAT_INDEX = GAME_HEADERS.indexOf('format');
-    var PLAYER_RATING_INDEX = GAME_HEADERS.indexOf('player.rating');
     var data = sheet.getRange(2, 1, lastRow - 1, GAME_HEADERS.length).getValues();
-    // Scan from bottom for last known rating per format
     var seen = {};
     for (var i = data.length - 1; i >= 0; i--) {
       var fmt = data[i][FORMAT_INDEX];

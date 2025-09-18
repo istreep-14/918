@@ -46,11 +46,59 @@ function processCallbacksBatch(maxBatch) {
     // best-effort parse, schema may vary
     if (res.status >= 200 && res.status < 300 && res.json && res.json.game) {
       var g = res.json.game;
-      var exactChange = (typeof g.ratingChange !== 'undefined') ? Number(g.ratingChange) : null;
-      var pregame = (g.players && g.players.bottom && typeof g.players.bottom.rating !== 'undefined') ? Number(g.players.bottom.rating) : null;
-      rSheet.appendRow([url, type, id, exactChange, pregame, g.moveTimestamps || '', isoNow()]);
-      // Update main sheet record's rating_is_exact = true and player.rating_change if present
-      tryUpdateGameExact_(url, exactChange);
+      // Extract sides with colors
+      var top = (g.players && g.players.top) || {};
+      var bottom = (g.players && g.players.bottom) || {};
+      var whiteSide = top && top.color === 'white' ? top : (bottom && bottom.color === 'white' ? bottom : {});
+      var blackSide = top && top.color === 'black' ? top : (bottom && bottom.color === 'black' ? bottom : {});
+      var whiteUsername = whiteSide.username || '';
+      var blackUsername = blackSide.username || '';
+      var whiteId = (whiteSide.id != null ? String(whiteSide.id) : '');
+      var blackId = (blackSide.id != null ? String(blackSide.id) : '');
+      var whiteUuid = whiteSide.uuid || '';
+      var blackUuid = blackSide.uuid || '';
+      var whitePregame = (whiteSide.rating != null ? Number(whiteSide.rating) : null);
+      var blackPregame = (blackSide.rating != null ? Number(blackSide.rating) : null);
+
+      var rcW = (typeof g.ratingChangeWhite !== 'undefined') ? Number(g.ratingChangeWhite) : null;
+      var rcB = (typeof g.ratingChangeBlack !== 'undefined') ? Number(g.ratingChangeBlack) : (typeof g.ratingChange !== 'undefined' ? -Number(g.ratingChange) : null);
+
+      // Determine opponent relative to configured username
+      var my = '';
+      try { my = getUsername(); } catch (e) { my = ''; }
+      var opponentSide = null;
+      if (my && whiteUsername && whiteUsername.toLowerCase() === my.toLowerCase()) opponentSide = blackSide;
+      else if (my && blackUsername && blackUsername.toLowerCase() === my.toLowerCase()) opponentSide = whiteSide;
+
+      var oppCountry = opponentSide && opponentSide.countryName ? opponentSide.countryName : '';
+      var oppMembership = opponentSide && opponentSide.membershipCode ? opponentSide.membershipCode : '';
+      var oppMemberSince = opponentSide && opponentSide.memberSince != null ? Number(opponentSide.memberSince) : '';
+      var oppPostMove = opponentSide && opponentSide.postMoveAction ? opponentSide.postMoveAction : '';
+      var oppDefaultTab = opponentSide && opponentSide.defaultTab != null ? Number(opponentSide.defaultTab) : '';
+
+      rSheet.appendRow([
+        url, type, id,
+        rcW, rcB,
+        whiteUsername, blackUsername,
+        whiteId, blackId,
+        whiteUuid, blackUuid,
+        whitePregame, blackPregame,
+        g.moveTimestamps || '',
+        oppCountry, oppMembership, oppMemberSince, oppPostMove, oppDefaultTab,
+        isoNow()
+      ]);
+      // Update main sheet record with exact rating changes mapped to player/opponent, ids/uuids if possible
+      tryApplyCallbackDetailsToGame_(url, {
+        whiteUsername: whiteUsername,
+        blackUsername: blackUsername,
+        ratingChangeWhite: rcW,
+        ratingChangeBlack: rcB,
+        whiteId: whiteId,
+        blackId: blackId,
+        whiteUuid: whiteUuid,
+        blackUuid: blackUuid,
+        gameUuid: g.uuid || ''
+      });
       // Mark queue row as done
       qSheet.getRange(i + 2, 5, 1, 3).setValues([['done', isoNow(), (rec[6] || 0) + 1]]);
       processed++;
@@ -66,9 +114,8 @@ function processCallbacksBatch(maxBatch) {
   return processed;
 }
 
-function tryUpdateGameExact_(url, exactChange) {
-  if (exactChange == null) return;
-  // search current month archive first
+function tryApplyCallbackDetailsToGame_(url, details) {
+  // search current and prior month archives
   var months = getCurrentAndPriorMonth_();
   for (var i = 0; i < months.length; i++) {
     var ss = getArchiveSpreadsheetByMonth_(months[i].yyyy, months[i].mm);
@@ -80,14 +127,76 @@ function tryUpdateGameExact_(url, exactChange) {
     var urls = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
     for (var r = 0; r < urls.length; r++) {
       if (urls[r][0] === url) {
-        // Update exact change and rating_is_exact using dynamic indices
-        var changeCol = GAME_HEADERS.indexOf('player.rating_change') + 1; // 1-based
-        var exactFlagCol = GAME_HEADERS.indexOf('rating_is_exact') + 1; // 1-based
-        if (changeCol > 0) sheet.getRange(r + 2, changeCol, 1, 1).setValue(exactChange);
-        if (exactFlagCol > 0) sheet.getRange(r + 2, exactFlagCol, 1, 1).setValue(true);
+        var baseRow = r + 2;
+        var playerUserCol = GAME_HEADERS.indexOf('player.username') + 1;
+        var opponentUserCol = GAME_HEADERS.indexOf('opponent.username') + 1;
+        var playerColorCol = GAME_HEADERS.indexOf('player.color') + 1;
+        var playerChangeCol = GAME_HEADERS.indexOf('player.rating_change') + 1;
+        var opponentChangeCol = GAME_HEADERS.indexOf('opponent.rating_change') + 1;
+        var playerIdCol = GAME_HEADERS.indexOf('player.@id') + 1;
+        var opponentIdCol = GAME_HEADERS.indexOf('opponent.@id') + 1;
+        var playerUuidCol = GAME_HEADERS.indexOf('player.uuid') + 1;
+        var opponentUuidCol = GAME_HEADERS.indexOf('opponent.uuid') + 1;
+        var gameUuidCol = GAME_HEADERS.indexOf('uuid') + 1;
+        var exactFlagCol = GAME_HEADERS.indexOf('rating_is_exact') + 1;
+
+        var rowVals = sheet.getRange(baseRow, 1, 1, GAME_HEADERS.length).getValues()[0];
+        var playerUsername = rowVals[playerUserCol - 1];
+        var playerColor = rowVals[playerColorCol - 1];
+
+        // Determine which color corresponds to player row
+        var playerIsWhite = false;
+        if (playerUsername) {
+          if (details.whiteUsername && String(details.whiteUsername).toLowerCase() === String(playerUsername).toLowerCase()) playerIsWhite = true;
+          else if (details.blackUsername && String(details.blackUsername).toLowerCase() === String(playerUsername).toLowerCase()) playerIsWhite = false;
+          else playerIsWhite = (playerColor === 'white');
+        } else {
+          playerIsWhite = (playerColor === 'white');
+        }
+
+        var playerChange = playerIsWhite ? details.ratingChangeWhite : details.ratingChangeBlack;
+        var opponentChange = playerIsWhite ? details.ratingChangeBlack : details.ratingChangeWhite;
+
+        var updates = {};
+        if (playerChangeCol > 0 && playerChange != null) updates[playerChangeCol] = playerChange;
+        if (opponentChangeCol > 0 && opponentChange != null) updates[opponentChangeCol] = opponentChange;
+        if (playerIdCol > 0 && !rowVals[playerIdCol - 1]) updates[playerIdCol] = playerIsWhite ? (details.whiteId || '') : (details.blackId || '');
+        if (opponentIdCol > 0 && !rowVals[opponentIdCol - 1]) updates[opponentIdCol] = playerIsWhite ? (details.blackId || '') : (details.whiteId || '');
+        if (playerUuidCol > 0 && !rowVals[playerUuidCol - 1]) updates[playerUuidCol] = playerIsWhite ? (details.whiteUuid || '') : (details.blackUuid || '');
+        if (opponentUuidCol > 0 && !rowVals[opponentUuidCol - 1]) updates[opponentUuidCol] = playerIsWhite ? (details.blackUuid || '') : (details.whiteUuid || '');
+        if (gameUuidCol > 0 && !rowVals[gameUuidCol - 1] && details.gameUuid) updates[gameUuidCol] = details.gameUuid;
+        if (exactFlagCol > 0) updates[exactFlagCol] = true;
+
+        // Apply updates in a single setValues call using a sparse row
+        if (Object.keys(updates).length > 0) {
+          var newRow = rowVals.slice();
+          for (var c in updates) {
+            newRow[Number(c) - 1] = updates[c];
+          }
+          sheet.getRange(baseRow, 1, 1, GAME_HEADERS.length).setValues([newRow]);
+        }
         return true;
       }
     }
   }
   return false;
+}
+
+/** Enqueue callback jobs for an array of newly appended game rows */
+function enqueueCallbacksForRows_(rows) {
+  if (!rows || rows.length === 0) return 0;
+  var qId = getCallbacksQueueSpreadsheetId();
+  if (!qId) return 0;
+  var q = getOrCreateSheet_(SpreadsheetApp.openById(qId), SHEET_NAMES.callbacksQueue);
+  ensureHeaders_(q, CALLBACKS_QUEUE_HEADERS);
+  var nowIso = isoNow();
+  var appended = 0;
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    var url = row[0], type = row[1], id = row[2];
+    if (!url || !id) continue;
+    q.appendRow([url, type, id, nowIso, 'queued', '', 0]);
+    appended++;
+  }
+  return appended;
 }
