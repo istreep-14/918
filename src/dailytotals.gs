@@ -20,6 +20,15 @@ function computeDailyTotalsForRange_(startDate, endDate) {
     }
   }
 
+  // Resolve column indices dynamically from headers to avoid drift
+  var END_TIME_INDEX = GAME_HEADERS.indexOf('end_time');
+  var FORMAT_INDEX = GAME_HEADERS.indexOf('format');
+  var PLAYER_OUTCOME_INDEX = GAME_HEADERS.indexOf('player.outcome');
+  var PLAYER_RATING_INDEX = GAME_HEADERS.indexOf('player.rating');
+  var PLAYER_RATING_LAST_INDEX = GAME_HEADERS.indexOf('player.rating_last');
+  var PLAYER_RATING_CHANGE_INDEX = GAME_HEADERS.indexOf('player.rating_change');
+  var DURATION_INDEX = GAME_HEADERS.indexOf('duration_seconds');
+
   // Walk current/prior months for speed
   var months = getCurrentAndPriorMonth_();
   for (var i = 0; i < months.length; i++) {
@@ -31,19 +40,18 @@ function computeDailyTotalsForRange_(startDate, endDate) {
     var data = sheet.getRange(2, 1, lastRow - 1, GAME_HEADERS.length).getValues();
     for (var r = 0; r < data.length; r++) {
       var row = data[r];
-      var endIso = row[8]; // end_time
+      var endIso = row[END_TIME_INDEX];
       var dateKey = getDateKeyFromLocalIso_(endIso);
       if (!dateKey) continue;
       var dt = new Date(dateKey + ' 00:00:00');
       if (dt < startDate || dt > endDate) continue;
       ensureDay(dateKey);
-      var fmt = row[19]; // format
-      // GAME_HEADERS indices: player.username(35), player.color(36), player.rating(37), player.rating_last(38), player.rating_change(39), player.result(40), player.outcome(41), player.score(42)
-      var playerOutcome = row[41];
-      var playerRating = row[37];
-      var playerRatingLast = row[38];
-      var playerRatingChange = row[39];
-      var dur = row[10];
+      var fmt = row[FORMAT_INDEX];
+      var playerOutcome = row[PLAYER_OUTCOME_INDEX];
+      var playerRating = row[PLAYER_RATING_INDEX];
+      var playerRatingLast = row[PLAYER_RATING_LAST_INDEX];
+      var playerRatingChange = row[PLAYER_RATING_CHANGE_INDEX];
+      var dur = row[DURATION_INDEX];
 
       var bucket = results[dateKey][fmt] || results[dateKey][fmt === 'daily' ? 'daily' : (fmt === 'bullet' || fmt === 'blitz' || fmt === 'rapid' ? fmt : null)];
       if (!bucket) continue; // skip variants outside four

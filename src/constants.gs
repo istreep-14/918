@@ -95,9 +95,12 @@ var GAME_HEADERS = [
   'start_time', 'end_time', 'duration_seconds',
   'rated', 'accuracies.white', 'accuracies.black', 'tcn', 'uuid', 'initial_setup', 'fen',
   'time_class', 'rules', 'format',
-  'pgn.Event', 'pgn.Site', 'pgn.Date', 'pgn.Round', 'pgn.White', 'pgn.Black', 'pgn.Result', 'pgn.ECO', 'pgn.ECOUrl', 'pgn.TimeControl', 'pgn.Termination', 'pgn.StartTime', 'pgn.EndDate', 'pgn.EndTime', 'pgn.Link',
+  // Keep only key PGN-derived fields that are useful for analysis/display
+  'pgn.ECO', 'pgn.ECOUrl',
   'player.username', 'player.color', 'player.rating', 'player.rating_last', 'player.rating_change', 'player.result', 'player.outcome', 'player.score', 'player.@id', 'player.uuid',
   'opponent.username', 'opponent.color', 'opponent.rating', 'opponent.rating_last', 'opponent.rating_change', 'opponent.result', 'opponent.outcome', 'opponent.score', 'opponent.@id', 'opponent.uuid',
+  // End reason: result code of the loser; if draw, same as both sides
+  'end_reason',
   'rating_is_exact'
 ];
 

@@ -101,6 +101,9 @@ function ingestGamesArray_(yyyy, mm, games) {
     }
   }
 
+  // If this month has no prior in-sheet rating for a format, seed from previous month
+  seedPriorRatingsFromPreviousMonth_(yyyy, mm, priorByFormat);
+
   // Sort input games chronologically by end_time (fallback to start_time)
   games.sort(function(a, b) {
     function ts(g) {
@@ -128,6 +131,88 @@ function ingestGamesArray_(yyyy, mm, games) {
   }
   metricRecord('archive_rows_appended', rows.length, { yyyy: yyyy, mm: mm });
   return rows.length;
+}
+
+/** Seed prior ratings map from previous month sheet to maintain cross-month continuity */
+function seedPriorRatingsFromPreviousMonth_(yyyy, mm, priorByFormat) {
+  try {
+    var prev = previousMonth_(yyyy, mm);
+    var prevSs = getArchiveSpreadsheetByMonth_(prev.yyyy, prev.mm);
+    if (!prevSs) return;
+    var sheet = prevSs.getSheetByName(SHEET_NAMES.games);
+    if (!sheet) return;
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return;
+    var FORMAT_INDEX = GAME_HEADERS.indexOf('format');
+    var PLAYER_RATING_INDEX = GAME_HEADERS.indexOf('player.rating');
+    var data = sheet.getRange(2, 1, lastRow - 1, GAME_HEADERS.length).getValues();
+    // Scan from bottom for last known rating per format
+    var seen = {};
+    for (var i = data.length - 1; i >= 0; i--) {
+      var fmt = data[i][FORMAT_INDEX];
+      var rating = data[i][PLAYER_RATING_INDEX];
+      if (fmt && rating != null && rating !== '' && !seen[fmt]) {
+        if (priorByFormat[fmt] == null) priorByFormat[fmt] = Number(rating);
+        seen[fmt] = true;
+      }
+    }
+  } catch (e) {
+    logWarn('SEED_PRIOR_FROM_PREV', 'Failed to seed prior ratings from previous month', { yyyy: yyyy, mm: mm, error: String(e) });
+  }
+}
+
+/** Compute previous month given yyyy and mm (strings) */
+function previousMonth_(yyyy, mm) {
+  var y = Number(yyyy);
+  var m = Number(mm);
+  m -= 1;
+  if (m === 0) { m = 12; y -= 1; }
+  var mmStr = (m < 10 ? '0' + m : '' + m);
+  return { yyyy: '' + y, mm: mmStr };
+}
+
+/** Discover archives, upsert meta rows, and pre-create per-month spreadsheets */
+function syncArchivesListAndPrepare() {
+  var list = fetchArchivesList_();
+  var username = getUsername(); // ensure configured
+  for (var i = 0; i < list.length; i++) {
+    var url = list[i];
+    var m = url.match(/\/(\d{4})\/(\d{2})$/);
+    if (!m) continue;
+    var yyyy = m[1], mm = m[2];
+    var status = isCurrentOrFutureMonth_(yyyy, mm) ? 'active' : 'inactive';
+    // Pre-create spreadsheet if missing
+    ensureArchiveSpreadsheet_(yyyy, mm);
+    // Upsert meta with minimal info; etag/last-modified will be filled during ingest
+    upsertArchivesMetaRow_(url, yyyy, mm, '', '', 0, status, null, null);
+  }
+  upsertOpsMeta_('SYNC_ARCHIVES_LAST_AT_ISO', isoNow());
+}
+
+/** Batched backfill: process up to maxMonths archives starting from stored cursor */
+function backfillArchivesBatch(maxMonths) {
+  var list = fetchArchivesList_();
+  // Ensure per-month spreadsheets exist beforehand for speed
+  for (var i = 0; i < list.length; i++) {
+    var m = list[i].match(/\/(\d{4})\/(\d{2})$/);
+    if (m) ensureArchiveSpreadsheet_(m[1], m[2]);
+  }
+  var idx = getBackfillCursorIndex();
+  if (idx < 0 || idx >= list.length) idx = 0;
+  var limit = Math.max(1, Number(maxMonths || 5));
+  var processed = 0;
+  upsertOpsMeta_('BACKFILL_LAST_AT_ISO', isoNow());
+  for (var j = idx; j < list.length && processed < limit; j++) {
+    var url = list[j];
+    upsertOpsMeta_('BACKFILL_NEXT_URL', url);
+    upsertOpsMeta_('BACKFILL_LAST_IDX', String(j));
+    var res = ingestArchiveMonth(url);
+    logInfo('BACKFILL_BATCH', 'Ingested ' + url, res);
+    processed++;
+    setBackfillCursorIndex(j + 1);
+  }
+  SpreadsheetApp.flush();
+  return { processed: processed, nextIndex: getBackfillCursorIndex(), totalArchives: list.length };
 }
 
 function backfillAllArchives() {
