@@ -1,12 +1,11 @@
 /**
- * Incremental ingest for active month with last URL slicing.
+ * Incremental ingest for active month with last URL slicing (per-month spreadsheet).
  */
 
 function getActiveMonth_() {
   var p = PropertiesService.getDocumentProperties();
   var key = p.getProperty(PROP_KEYS.CURRENT_ACTIVE_MONTH);
   if (key) return key;
-  // Fallback: from today
   var today = new Date();
   var yyyy = String(today.getFullYear());
   var mm = ('0' + (today.getMonth() + 1)).slice(-2);
@@ -97,7 +96,6 @@ function ingestActiveMonthOnce() {
     var apiCount = games.length;
     var lastUrlApi = apiCount ? games[apiCount - 1].url : '';
 
-    // Slice after last seen URL
     var lastSeen = getLastSeenUrl_(active);
     var startIdx = 0;
     if (lastSeen) {
@@ -115,21 +113,30 @@ function ingestActiveMonthOnce() {
 
     var rows = buildMonthRows_(newGames, myUsername);
 
-    // Write to ActiveGames
-    var ss = getControlSpreadsheet_();
-    var sheet = getOrCreateSheet_(ss, SHEET_NAMES.ActiveGames);
+    // Write to Active month spreadsheet (Games tab)
+    var ssActive = ensureActiveMonthSpreadsheet_(active);
+    var shGames = getOrCreateSheet_(ssActive, MONTH_TABS.Games);
     var headers = (ACTIVE_HEADERS && ACTIVE_HEADERS.length) ? ACTIVE_HEADERS : GAME_HEADERS;
     var outRows = (headers === GAME_HEADERS) ? rows : rows.map(function(r){ return subsetRow_(r, GAME_HEADERS, headers); });
-    writeRowsAppend_(sheet, headers, outRows);
+    writeRowsAppend_(shGames, headers, outRows);
 
-    // Update ledger
-    var sheetCount = sheet.getLastRow() > 1 ? (sheet.getLastRow() - 1) : 0;
+    // Update daily totals for affected dates
+    var affectedDates = {};
+    var endIdx = GAME_HEADERS.indexOf('end_time');
+    for (var r = 0; r < rows.length; r++) {
+      var dk = getDateKeyFromLocalIso_(rows[r][endIdx]);
+      if (dk) affectedDates[dk] = true;
+    }
+    recomputeDailyTotalsForDates_(Object.keys(affectedDates));
+
+    // Update ledger in Control file
+    var sheetCount = shGames.getLastRow() > 1 ? (shGames.getLastRow() - 1) : 0;
     patchArchiveListRow_(yyyy, mm, {
       archive_url: APIS.archiveMonth(username, yyyy, mm),
       last_month_check_at: nowIso,
       month_etag: PropertiesService.getDocumentProperties().getProperty(PROP_KEYS.MONTH_ETAG_PREFIX + active) || '',
       last_url_api: lastUrlApi,
-      last_url_seen: outRows.length ? newGames[newGames.length - 1].url : lastSeen,
+      last_url_seen: newGames[newGames.length - 1].url,
       api_game_count_last: apiCount,
       sheet_game_count: sheetCount,
       ingested_at_last: nowIso

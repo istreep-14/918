@@ -1,5 +1,5 @@
 /**
- * Month rollover: finalize previous month, move data to archive, seed new month.
+ * Month rollover: finalize previous month, move active monthly spreadsheet to archive folder.
  */
 
 function getYearMonthParts_(yyyyMm) {
@@ -29,56 +29,32 @@ function finalizePreviousMonthIfReady_() {
     // If the newest month equals the active month, nothing to finalize
     if (newestMonth === active) return false;
 
-    // Candidate previous month to finalize
-    var prev = active;
-    var prevParts = getYearMonthParts_(prev);
-
-    // Verify stability of previous month by ETag / parity
-    var monthRes = fetchMonthArchive_(username, prevParts.yyyy, prevParts.mm);
-    // Accept 304 as stable; or if 200, ensure last_url_api equals last_url_seen and counts match
-    var ledger = getArchiveListRow_(prevParts.yyyy, prevParts.mm) || {};
+    // Verify stability of previous month by ETag/URL parity
+    var monthRes = fetchMonthArchive_(username, parts.yyyy, parts.mm);
+    var ledger = getArchiveListRow_(parts.yyyy, parts.mm) || {};
     var apiGames = 0;
     var lastUrlApi = '';
     if (monthRes.status === 200 && monthRes.json && monthRes.json.games) {
       apiGames = monthRes.json.games.length;
       lastUrlApi = apiGames ? monthRes.json.games[apiGames - 1].url : '';
     }
-    var stable = (monthRes.status === 304) || (ledger && String(ledger.last_url_seen) === String(lastUrlApi) && Number(ledger.api_game_count_last || 0) === apiGames);
+    var stable = (monthRes.status === 304) || (String(ledger.last_url_seen || '') === String(lastUrlApi) && Number(ledger.api_game_count_last || 0) === apiGames);
     if (!stable) return false;
 
-    // Move ActiveGames rows to the archive file (per year)
-    var ssControl = getControlSpreadsheet_();
-    var shActive = getOrCreateSheet_(ssControl, SHEET_NAMES.ActiveGames);
-    var headers = readHeaders_(shActive);
-    if (headers.length === 0) headers = (ACTIVE_HEADERS && ACTIVE_HEADERS.length) ? ACTIVE_HEADERS : GAME_HEADERS;
-    var lastRow = shActive.getLastRow();
-    var toMove = (lastRow >= 2) ? shActive.getRange(2, 1, lastRow - 1, headers.length).getValues() : [];
+    // Move Active monthly spreadsheet file from Active Months -> Archive Months
+    var folders = ensureRootAndSubfolders_();
+    var name = 'Archive ' + parts.yyyy + '-' + parts.mm;
+    var file = findFileInFolderByName_(folders.activeFolder, name);
+    if (!file) return false;
+    folders.archiveFolder.addFile(file);
+    folders.activeFolder.removeFile(file);
 
-    if (toMove.length) {
-      var yyyy = prevParts.yyyy;
-      var ssArchive = getArchiveSpreadsheetForYear_(yyyy);
-      if (!ssArchive) throw new Error('Archive spreadsheet for year ' + yyyy + ' is not configured');
-      var shArchive = getOrCreateSheet_(ssArchive, 'ArchiveGames_' + yyyy);
-      writeRowsAppend_(shArchive, headers, toMove);
-    }
+    patchArchiveListRow_(parts.yyyy, parts.mm, { finalized_at: nowIso });
 
-    // Recompute and append daily totals to archive totals (in archive file or control as per design)
-    recomputeDailyTotalsForMonth_(prevParts.yyyy, prevParts.mm);
-
-    // Mark ledger and clear actives
-    patchArchiveListRow_(prevParts.yyyy, prevParts.mm, { finalized_at: nowIso });
-
-    shActive.clearContents();
-    ensureHeaders_(shActive, (ACTIVE_HEADERS && ACTIVE_HEADERS.length) ? ACTIVE_HEADERS : GAME_HEADERS);
-
-    var shTotals = getDailyTotalsActiveSheet_();
-    shTotals.clearContents();
-    ensureHeaders_(shTotals, DAILY_TOTALS_HEADERS);
-
-    // Seed new active month dates if the list reports a newer month
+    // Seed the new active month spreadsheet
     setActiveMonth_(newestMonth);
     var newParts = getYearMonthParts_(newestMonth);
-    seedDailyTotalsForNewMonth_(newParts.yyyy, newParts.mm);
+    ensureActiveMonthSpreadsheet_(newestMonth);
 
     return true;
   });

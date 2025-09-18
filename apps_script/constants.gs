@@ -16,6 +16,12 @@ var SHEET_NAMES = {
   Health: 'Health'
 };
 
+// Tabs inside each monthly spreadsheet
+var MONTH_TABS = {
+  Games: 'Games',
+  DailyTotals: 'DailyTotals'
+};
+
 // ------------------------------
 // Headers
 // ------------------------------
@@ -66,9 +72,12 @@ var PROP_KEYS = {
   MONTH_ETAG_PREFIX: 'MONTH_ETAG_', // + YYYY-MM
   LAST_SEEN_URL_PREFIX: 'LAST_SEEN_URL_', // + YYYY-MM
   CONTROL_SPREADSHEET_ID: 'CONTROL_SPREADSHEET_ID',
-  ARCHIVE_SPREADSHEET_ID_PREFIX: 'ARCHIVE_SPREADSHEET_ID_', // + YYYY for per-year files
+  ARCHIVE_SPREADSHEET_ID_PREFIX: 'ARCHIVE_SPREADSHEET_ID_', // + YYYY for per-year files (legacy optional)
   USERNAME: 'USERNAME',
-  MY_USERNAME: 'MY_USERNAME'
+  MY_USERNAME: 'MY_USERNAME',
+  ROOT_FOLDER_ID: 'ROOT_FOLDER_ID',
+  ACTIVE_MONTHS_FOLDER_ID: 'ACTIVE_MONTHS_FOLDER_ID',
+  ARCHIVE_MONTHS_FOLDER_ID: 'ARCHIVE_MONTHS_FOLDER_ID'
 };
 
 // API endpoints
