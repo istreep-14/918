@@ -1,160 +1,132 @@
 {
-    "stats": {
-        "white_game_count": 197,
-        "black_game_count": 194,
-        "win_count": 343,
-        "draw_count": 23,
-        "loss_count": 25,
-        "rating_delta": -74,
-        "history": [
-            {
-                "timestamp": 1755500400000,
-                "rating": 3400,
-                "day_close_rating": 3400,
-                "day": 20319
-            },
-            {
-                "timestamp": 1755586800000,
-                "rating": 3396,
-                "day_close_rating": 3396,
-                "day": 20320
-            },
-            {
-                "timestamp": 1755673200000,
-                "rating": 3400,
-                "day_close_rating": 3400,
-                "day": 20321
-            },
-            {
-                "timestamp": 1755759600000,
-                "rating": 3405,
-                "day_close_rating": 3405,
-                "day": 20322
-            },
-            {
-                "timestamp": 1755846000000,
-                "rating": 3407,
-                "day_close_rating": 3407,
-                "day": 20323
-            },
-            {
-                "timestamp": 1756191600000,
-                "rating": 3365,
-                "day_close_rating": 3365,
-                "day": 20327
-            },
-            {
-                "timestamp": 1756278000000,
-                "rating": 3372,
-                "day_close_rating": 3372,
-                "day": 20328
-            },
-            {
-                "timestamp": 1756364400000,
-                "rating": 3385,
-                "day_close_rating": 3385,
-                "day": 20329
-            },
-            {
-                "timestamp": 1756450800000,
-                "rating": 3400,
-                "day_close_rating": 3400,
-                "day": 20330
-            },
-            {
-                "timestamp": 1756796400000,
-                "rating": 3400,
-                "day_close_rating": 3400,
-                "day": 20334
-            },
-            {
-                "timestamp": 1757401200000,
-                "rating": 3376,
-                "day_close_rating": 3376,
-                "day": 20341
-            },
-            {
-                "timestamp": 1757487600000,
-                "rating": 3377,
-                "day_close_rating": 3377,
-                "day": 20342
-            },
-            {
-                "timestamp": 1757660400000,
-                "rating": 3380,
-                "day_close_rating": 3380,
-                "day": 20344
-            },
-            {
-                "timestamp": 1757746800000,
-                "rating": 3400,
-                "day_close_rating": 3400,
-                "day": 20345
-            },
-            {
-                "timestamp": 1758006000000,
-                "rating": 3326,
-                "day_close_rating": 3326,
-                "day": 20348
-            }
-        ],
-        "count": 398,
-        "rated_count": 391,
-        "opponent_rating_avg": 2842.4833759590792,
-        "opponent_rating_win_avg": 2818.816326530612,
-        "opponent_rating_draw_avg": 2992.086956521739,
-        "opponent_rating_loss_avg": 3029.56,
-        "white_win_count": 173,
-        "white_draw_count": 13,
-        "white_loss_count": 11,
-        "black_win_count": 170,
-        "black_draw_count": 10,
-        "black_loss_count": 14,
-        "rating_last": 3326,
-        "rating_first": 3400,
-        "rating_max": 3431,
-        "rating_max_timestamp": 1755540734,
-        "moves_count": 16077,
-        "streak_last": 0,
-        "streak_max": 38,
-        "streak_max_timestamp": 1755586800,
-        "opponent_rating_max": 3184,
-        "opponent_rating_max_timestamp": 1757444752,
-        "opponent_rating_max_uuid": "12d55bb4-1907-11e6-805a-000000000000",
-        "result_type_count": {
-            "win": {
-                "resigned": 289,
-                "timeout": 36,
-                "checkmated": 17,
-                "abandoned": 1
-            },
-            "loss": {
-                "resigned": 23,
-                "timeout": 1,
-                "checkmated": 1
-            },
-            "draw": {
-                "insufficient": 5,
-                "repetition": 13,
-                "agreed": 4,
-                "timevsinsufficient": 1
-            }
-        },
-        "best_win_game": {
-            "id": 151757883293,
-            "player": "Oleksandr_Bortnyk",
-            "rating": 3184
-        },
-        "accuracy_count": 0,
-        "accuracy_avg": 0,
-        "starting_day": 20319
+  "game": {
+    "areFriends": false,
+    "canSendTrophy": false,
+    "changesPlayersRating": 1,
+    "colorOfWinner": "black",
+    "id": 141381993160,
+    "uuid": "db7ec145-6f41-11f0-a782-67c26501000f",
+    "initialSetup": "",
+    "isLiveGame": true,
+    "isAbortable": false,
+    "isAnalyzable": true,
+    "isCheckmate": false,
+    "isStalemate": false,
+    "isFinished": true,
+    "isRated": true,
+    "isResignable": false,
+    "lastMove": "Ut",
+    "moveList": "mC0KgvZRfAYIks5QlBKBsBIBvBQBdB!Teg6SAHSZbsZQCKRKBK90cMQHsH8!ad7PK0PHMT2T0THNfeNUTs98dt8eseUt",
+    "plyCount": 46,
+    "ratingChange": -10,
+    "ratingChangeWhite": -10,
+    "ratingChangeBlack": 10,
+    "gameEndReason": "resigned",
+    "resultMessage": "ArmAssassin won by resignation",
+    "endTime": 1754099041,
+    "turnColor": "white",
+    "type": "chess",
+    "typeName": "Standard Chess",
+    "allowVacation": false,
+    "pgnHeaders": {
+      "Event": "Live Chess",
+      "Site": "Chess.com",
+      "Date": "2025.08.02",
+      "White": "FrankScobey",
+      "Black": "ArmAssassin",
+      "Result": "0-1",
+      "ECO": "C41",
+      "WhiteElo": 1670,
+      "BlackElo": 1617,
+      "TimeControl": "180",
+      "EndTime": "1:44:01 GMT+0000",
+      "Termination": "ArmAssassin won by resignation",
+      "SetUp": "1",
+      "FEN": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     },
-    "progress": 100,
-    "shouldShowGlobalRankAndPercentile": true,
-    "rank": 2,
-    "percentile": 99.9,
-    "playersCount": 12758195,
-    "friendRank": 1,
-    "friendRankIsExpired": false,
-    "friendCount": 0
+    "moveTimestamps": "1799,1791,1791,1785,1787,1778,1757,1777,1748,1769,1735,1768,1719,1767,1716,1761,1701,1754,1675,1741,1635,1722,1591,1697,1590,1687,1549,1595,1524,1586,1509,1485,1394,1468,1388,1459,1380,1387,1306,1371,1272,1318,1204,1276,1185,1197,1163",
+    "baseTime1": 1800,
+    "timeIncrement1": 0
+  },
+  "players": {
+    "top": {
+      "uuid": "ac14e76a-14fa-11e6-803c-000000000000",
+      "isContentHidden": true,
+      "id": 28094560,
+      "isComputer": false,
+      "avatarUrl": "https://images.chesscomfiles.com/uploads/v1/user/28094560.0727d8c7.100x100o.38bbd5a14846.jpeg",
+      "countryId": 14,
+      "isEnabled": true,
+      "canWinOnTime": false,
+      "color": "black",
+      "countryName": "Armenia",
+      "defaultTab": 1,
+      "hasMovedAtLeastOnce": true,
+      "isDrawable": false,
+      "isOnline": false,
+      "isInLivechess": false,
+      "isTouchMove": false,
+      "isVacation": false,
+      "isWhiteOnBottom": false,
+      "lastLoginDate": 1757406378,
+      "location": "Far Far Away",
+      "membershipLevel": 10,
+      "membershipCode": "basic",
+      "memberSince": 1462697754,
+      "postMoveAction": "next_game",
+      "rating": 1617,
+      "turnTimeRemaining": "0 days",
+      "username": "ArmAssassin",
+      "vacationRemaining": "4 weeks",
+      "gamesInProgress": 0,
+      "friendRequestSent": false,
+      "friendRequestReceived": false,
+      "isBlocked": false,
+      "isFriend": false
+    },
+    "bottom": {
+      "uuid": "5d6994a8-562c-11f0-ac7a-336ce3ce50ee",
+      "isContentHidden": true,
+      "id": 463612166,
+      "isComputer": false,
+      "avatarUrl": "https://www.chess.com/bundles/web/images/noavatar_l.84a92436.gif",
+      "countryId": 2,
+      "isEnabled": true,
+      "canWinOnTime": false,
+      "color": "white",
+      "countryName": "United States",
+      "defaultTab": 1,
+      "hasMovedAtLeastOnce": false,
+      "isDrawable": false,
+      "isOnline": true,
+      "isInLivechess": true,
+      "isTouchMove": false,
+      "isVacation": false,
+      "isWhiteOnBottom": false,
+      "lastLoginDate": 1758161811,
+      "membershipLevel": 50,
+      "membershipCode": "diamond",
+      "memberSince": 1751340899,
+      "postMoveAction": "next_game",
+      "rating": 1670,
+      "turnTimeRemaining": "0 days",
+      "flair": {
+        "id": "abd554aa-2af1-11ee-bb50-1bb6daf0ee3e",
+        "images": {
+          "png": "https://images.chesscomfiles.com/chess-flair/membership_icons/diamond_traditional.png",
+          "svg": "https://images.chesscomfiles.com/chess-flair/membership_icons/diamond_traditional.svg",
+          "lottie": "https://images.chesscomfiles.com/chess-flair/membership_icons/diamond_traditional.lottie"
+        }
+      },
+      "username": "FrankScobey",
+      "vacationRemaining": "6 weeks",
+      "gamesInProgress": 0,
+      "friendRequestSent": false,
+      "friendRequestReceived": false,
+      "isBlocked": false,
+      "isFriend": false
+    }
+  },
+  "friendRequestSent": false,
+  "friendRequestReceived": false
 }
