@@ -3,6 +3,9 @@
 function monthKey_(yyyy, mm) { return yyyy + '-' + mm; }
 
 function ensureArchiveSpreadsheet_(yyyy, mm) {
+  if (getArchiveStorageMode() === 'single') {
+    return getOrCreateMasterArchive_();
+  }
   var registry = getArchiveMonthRegistry();
   var key = monthKey_(yyyy, mm);
   var id = registry[key];
@@ -19,10 +22,74 @@ function ensureArchiveSpreadsheet_(yyyy, mm) {
 }
 
 function getArchiveSpreadsheetByMonth_(yyyy, mm) {
+  if (getArchiveStorageMode() === 'single') {
+    return getOrCreateMasterArchive_();
+  }
   var registry = getArchiveMonthRegistry();
   var key = monthKey_(yyyy, mm);
   var id = registry[key];
   return id ? SpreadsheetApp.openById(id) : null;
+}
+
+function getOrCreateMasterArchive_() {
+  var id = getMasterArchiveSpreadsheetId();
+  if (id) {
+    var ss = SpreadsheetApp.openById(id);
+    ensureHeaders_(getOrCreateSheet_(ss, SHEET_NAMES.games), GAME_HEADERS);
+    ensureHeaders_(getOrCreateSheet_(ss, SHEET_NAMES.gameIndex), GAME_INDEX_HEADERS);
+    return ss;
+  }
+  var folderId = getArchivesFolderId() || getFolderId();
+  var ssNew = createSpreadsheetInFolder_('Archive Master', folderId);
+  ensureHeaders_(getOrCreateSheet_(ssNew, SHEET_NAMES.games), GAME_HEADERS);
+  ensureHeaders_(getOrCreateSheet_(ssNew, SHEET_NAMES.gameIndex), GAME_INDEX_HEADERS);
+  setMasterArchiveSpreadsheetId(ssNew.getId());
+  return ssNew;
+}
+
+/** Merge all monthly archives into the master archive. Optionally delete source files. */
+function mergeArchivesIntoMaster(deleteAfter) {
+  var mode = getArchiveStorageMode();
+  var master = getOrCreateMasterArchive_();
+  var masterGames = master.getSheetByName(SHEET_NAMES.games);
+  var urlIndex = buildUrlIndex_(masterGames);
+  var appendedTotal = 0;
+  var registry = getArchiveMonthRegistry();
+  var keys = Object.keys(registry);
+  for (var i = 0; i < keys.length; i++) {
+    var id = registry[keys[i]];
+    if (!id) continue;
+    var ss = SpreadsheetApp.openById(id);
+    var src = ss.getSheetByName(SHEET_NAMES.games);
+    if (!src) continue;
+    var lastRow = src.getLastRow();
+    if (lastRow < 2) continue;
+    var data = src.getRange(2, 1, lastRow - 1, GAME_HEADERS.length).getValues();
+    var toAppend = [];
+    for (var r = 0; r < data.length; r++) {
+      var url = data[r][0];
+      if (url && !urlIndex[url]) {
+        toAppend.push(data[r]);
+        urlIndex[url] = true;
+      }
+    }
+    if (toAppend.length > 0) {
+      appendRowsWithIndex_(master, toAppend);
+      appendedTotal += toAppend.length;
+    }
+    if (deleteAfter) {
+      try {
+        DriveApp.getFileById(id).setTrashed(true);
+      } catch (e) {
+        logWarn('MERGE_DELETE_FAIL', 'Failed to delete monthly archive file', { id: id, error: String(e) });
+      }
+      delete registry[keys[i]];
+    }
+  }
+  setArchiveMonthRegistry(registry);
+  if (mode !== 'single') setArchiveStorageMode('single');
+  logInfo('MERGE_ARCHIVES', 'Merged into master', { appended: appendedTotal, deleted: Boolean(deleteAfter) });
+  return appendedTotal;
 }
 
 function buildUrlIndex_(sheet) {

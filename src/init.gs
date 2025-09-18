@@ -44,6 +44,12 @@ function initSetup(username) {
   setArchivesMetaSpreadsheetId(archivesMeta.getId());
   ensureHeaders_(getOrCreateSheet_(archivesMeta, SHEET_NAMES.archivesMeta), ARCHIVES_META_HEADERS);
 
+  // Create master archive upfront; default to monthly mode unless user switches
+  var master = createSpreadsheetInFolder_('Archive Master', folder.getId());
+  setMasterArchiveSpreadsheetId(master.getId());
+  ensureHeaders_(getOrCreateSheet_(master, SHEET_NAMES.games), GAME_HEADERS);
+  ensureHeaders_(getOrCreateSheet_(master, SHEET_NAMES.gameIndex), GAME_INDEX_HEADERS);
+
   // Profile + Stats timeline in Ops
   ensureHeaders_(getOrCreateSheet_(ops, SHEET_NAMES.profile), PROFILE_HEADERS);
   ensureHeaders_(getOrCreateSheet_(ops, SHEET_NAMES.playerStatsTimeline), PLAYER_STATS_TIMELINE_HEADERS);

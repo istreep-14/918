@@ -18,6 +18,8 @@ var PROP_KEYS = {
   callbacksResultsSpreadsheetId: 'CALLBACKS_RESULTS_SPREADSHEET_ID',
   opsSpreadsheetId: 'OPS_SPREADSHEET_ID',
   archivesMetaSpreadsheetId: 'ARCHIVES_META_SPREADSHEET_ID',
+  masterArchiveSpreadsheetId: 'MASTER_ARCHIVE_SPREADSHEET_ID',
+  archiveStorageMode: 'ARCHIVE_STORAGE_MODE', // 'monthly' (default) or 'single'
   username: 'USERNAME',
   timezone: 'TIMEZONE',
   schemaVersion: 'SCHEMA_VERSION'

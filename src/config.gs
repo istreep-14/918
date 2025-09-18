@@ -60,6 +60,19 @@ function getOpsSpreadsheetId() { return getSpreadsheetId_(PROP_KEYS.opsSpreadshe
 function setArchivesMetaSpreadsheetId(id) { setSpreadsheetId_(PROP_KEYS.archivesMetaSpreadsheetId, id); }
 function getArchivesMetaSpreadsheetId() { return getSpreadsheetId_(PROP_KEYS.archivesMetaSpreadsheetId); }
 
+/** Archive storage mode: 'monthly' (default) or 'single' */
+function getArchiveStorageMode() {
+  return getScriptProperties_().getProperty(PROP_KEYS.archiveStorageMode) || 'monthly';
+}
+
+function setArchiveStorageMode(mode) {
+  var normalized = (mode === 'single') ? 'single' : 'monthly';
+  getScriptProperties_().setProperty(PROP_KEYS.archiveStorageMode, normalized);
+}
+
+function setMasterArchiveSpreadsheetId(id) { setSpreadsheetId_(PROP_KEYS.masterArchiveSpreadsheetId, id); }
+function getMasterArchiveSpreadsheetId() { return getSpreadsheetId_(PROP_KEYS.masterArchiveSpreadsheetId); }
+
 /** Backfill cursor helpers */
 function getBackfillCursorIndex() {
   var v = getScriptProperties_().getProperty('BACKFILL_CURSOR_INDEX');
