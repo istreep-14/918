@@ -11,6 +11,7 @@ var USER_AGENT = 'ChessSheets/1.0 (+AppsScript)';
 /** Properties keys */
 var PROP_KEYS = {
   folderId: 'FOLDER_ID',
+  archivesFolderId: 'ARCHIVES_FOLDER_ID',
   gamesActiveSpreadsheetId: 'GAMES_ACTIVE_SPREADSHEET_ID',
   dailyTotalsActiveSpreadsheetId: 'DAILY_TOTALS_ACTIVE_SPREADSHEET_ID',
   callbacksQueueSpreadsheetId: 'CALLBACKS_QUEUE_SPREADSHEET_ID',
@@ -101,7 +102,7 @@ var GAME_HEADERS = [
 
 /** Archives meta headers */
 var ARCHIVES_META_HEADERS = [
-  'archive_url', 'yyyy', 'mm', 'etag', 'last_modified', 'last_checked', 'games_count', 'status', 'callback_progress'
+  'archive_url', 'yyyy', 'mm', 'etag', 'last_modified', 'last_checked', 'games_count', 'status', 'callback_progress', 'games_seen', 'games_appended'
 ];
 
 /** Game index headers for cross-sheet updates */

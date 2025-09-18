@@ -8,6 +8,9 @@ function initSetup(username) {
 
   var folder = DriveApp.createFolder('Chess Sheets Project');
   setFolderId(folder.getId());
+  // Archives subfolder to keep month files organized
+  var archivesFolder = ensureSubfolder_(folder.getId(), 'Archives');
+  setArchivesFolderId(archivesFolder.getId());
 
   // Ops
   var ops = createSpreadsheetInFolder_('Ops', folder.getId());

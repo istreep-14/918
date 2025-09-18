@@ -9,7 +9,7 @@ function fetchArchivesList_() {
   throw new Error('Failed to fetch archives list');
 }
 
-function upsertArchivesMetaRow_(archiveUrl, yyyy, mm, etag, lastModified, gamesCount, status) {
+function upsertArchivesMetaRow_(archiveUrl, yyyy, mm, etag, lastModified, gamesCount, status, gamesSeen, gamesAppended) {
   var ss = SpreadsheetApp.openById(getArchivesMetaSpreadsheetId());
   var sheet = getOrCreateSheet_(ss, SHEET_NAMES.archivesMeta);
   ensureHeaders_(sheet, ARCHIVES_META_HEADERS);
@@ -21,7 +21,7 @@ function upsertArchivesMetaRow_(archiveUrl, yyyy, mm, etag, lastModified, gamesC
       if (rng[i][0] === archiveUrl) { foundRow = i + 2; break; }
     }
   }
-  var row = [archiveUrl, yyyy, mm, etag || '', lastModified || '', isoNow(), gamesCount || 0, status || 'active', ''];
+  var row = [archiveUrl, yyyy, mm, etag || '', lastModified || '', isoNow(), gamesCount || 0, status || 'active', '', (gamesSeen != null ? gamesSeen : ''), (gamesAppended != null ? gamesAppended : '')];
   if (foundRow > 0) {
     sheet.getRange(foundRow, 1, 1, row.length).setValues([row]);
   } else {
@@ -49,7 +49,8 @@ function ingestArchiveMonth(archiveUrl) {
   var etag = getStoredEtagForArchive_(archiveUrl);
   var res = httpFetchJson(archiveUrl, { etag: etag });
   if (res.status === 304) {
-    upsertArchivesMetaRow_(archiveUrl, yyyy, mm, etag, '', 0, (isCurrentOrFutureMonth_(yyyy, mm) ? 'active' : 'inactive'));
+    // Preserve prior last_modified and games_count by not overwriting with blanks
+    upsertArchivesMetaRow_(archiveUrl, yyyy, mm, etag, '', null, (isCurrentOrFutureMonth_(yyyy, mm) ? 'active' : 'inactive'), null, null);
     return { status: 'not_modified', appended: 0 };
   }
   if (!(res.status >= 200 && res.status < 300) || !res.json) {
@@ -57,12 +58,13 @@ function ingestArchiveMonth(archiveUrl) {
     return { status: 'error', appended: 0 };
   }
   var games = res.json.games || [];
+  var gamesSeen = games.length;
   var appended = ingestGamesArray_(yyyy, mm, games);
-  var newEtag = (res.headers && (res.headers['ETag'] || res.headers['Etag'])) || etag || '';
-  var lastModified = (res.headers && (res.headers['Last-Modified'] || res.headers['Last-modified'])) || '';
+  var newEtag = (res.headers && (res.headers['etag'])) || etag || '';
+  var lastModified = (res.headers && (res.headers['last-modified'])) || '';
   var status = (isCurrentOrFutureMonth_(yyyy, mm) ? 'active' : 'inactive');
-  upsertArchivesMetaRow_(archiveUrl, yyyy, mm, newEtag, lastModified, games.length, status);
-  return { status: 'ok', appended: appended };
+  upsertArchivesMetaRow_(archiveUrl, yyyy, mm, newEtag, lastModified, games.length, status, gamesSeen, appended);
+  return { status: 'ok', appended: appended, seen: gamesSeen };
 }
 
 function isCurrentOrFutureMonth_(yyyy, mm) {
@@ -105,11 +107,20 @@ function ingestGamesArray_(yyyy, mm, games) {
 
 function backfillAllArchives() {
   var list = fetchArchivesList_();
+  // Pre-create spreadsheets for each archive month so they exist upfront
   for (var i = 0; i < list.length; i++) {
-    var url = list[i];
+    var m = list[i].match(/\/(\d{4})\/(\d{2})$/);
+    if (m) ensureArchiveSpreadsheet_(m[1], m[2]);
+  }
+  var start = new Date().getTime();
+  for (var j = 0; j < list.length; j++) {
+    var url = list[j];
     var res = ingestArchiveMonth(url);
     logInfo('BACKFILL_MONTH', 'Ingested ' + url, res);
-    // Execution time guard
-    if (Utilities.getRemainingDailyQuota && i % 10 === 0) SpreadsheetApp.flush();
+    if (new Date().getTime() - start > 5 * 60 * 1000) {
+      logWarn('BACKFILL_TIME', 'Stopping early due to time limit', { processed: j + 1 });
+      break;
+    }
+    if ((j + 1) % 5 === 0) SpreadsheetApp.flush();
   }
 }

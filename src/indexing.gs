@@ -9,7 +9,7 @@ function ensureArchiveSpreadsheet_(yyyy, mm) {
   if (id) {
     return SpreadsheetApp.openById(id);
   }
-  var folderId = getFolderId();
+  var folderId = getArchivesFolderId() || getFolderId();
   var ss = createSpreadsheetInFolder_('Archive ' + yyyy + '-' + mm, folderId);
   ensureHeaders_(getOrCreateSheet_(ss, SHEET_NAMES.games), GAME_HEADERS);
   ensureHeaders_(getOrCreateSheet_(ss, SHEET_NAMES.gameIndex), GAME_INDEX_HEADERS);

@@ -37,6 +37,13 @@ function createSpreadsheetInFolder_(name, folderId) {
   return ss;
 }
 
+function ensureSubfolder_(parentFolderId, subfolderName) {
+  var parent = DriveApp.getFolderById(parentFolderId);
+  var it = parent.getFoldersByName(subfolderName);
+  if (it.hasNext()) return it.next();
+  return parent.createFolder(subfolderName);
+}
+
 function getOrCreateSheet_(ss, name) {
   var sheet = ss.getSheetByName(name);
   if (!sheet) sheet = ss.insertSheet(name);

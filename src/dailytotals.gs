@@ -38,12 +38,7 @@ function computeDailyTotalsForRange_(startDate, endDate) {
       if (dt < startDate || dt > endDate) continue;
       ensureDay(dateKey);
       var fmt = row[19]; // format
-      var outcome = row[38]; // player.outcome
-      var rating = row[36]; // player.rating (at end)
-      var ratingLast = row[37];
-      var ratingChange = row[38 + 1]; // wrong index guard later
-      // Fix ratingChange index: player.rating_change is at index 38? Let's recompute:
-      // GAME_HEADERS indices: ... player.username(35), player.color(36), player.rating(37), player.rating_last(38), player.rating_change(39), player.result(40), player.outcome(41), player.score(42)
+      // GAME_HEADERS indices: player.username(35), player.color(36), player.rating(37), player.rating_last(38), player.rating_change(39), player.result(40), player.outcome(41), player.score(42)
       var playerOutcome = row[41];
       var playerRating = row[37];
       var playerRatingLast = row[38];

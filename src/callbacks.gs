@@ -80,8 +80,9 @@ function tryUpdateGameExact_(url, exactChange) {
     var urls = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
     for (var r = 0; r < urls.length; r++) {
       if (urls[r][0] === url) {
-        // player.rating_change col index 39 (1-based column is 40)
-        sheet.getRange(r + 2, 40, 1, 2).setValues([[exactChange, true]]);
+        // Update exact change (col 40 1-based) and rating_is_exact (col 59 1-based)
+        sheet.getRange(r + 2, 40, 1, 1).setValue(exactChange);
+        sheet.getRange(r + 2, 59, 1, 1).setValue(true);
         return true;
       }
     }
