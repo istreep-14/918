@@ -39,6 +39,15 @@ function initSetup(username) {
   setCallbacksResultsSpreadsheetId(callbacksResults.getId());
   ensureHeaders_(getOrCreateSheet_(callbacksResults, SHEET_NAMES.callbacksResults), CALLBACKS_RESULTS_HEADERS);
 
+  // Openings
+  var openingsQueue = createSpreadsheetInFolder_('Openings Queue', folder.getId());
+  setOpeningsQueueSpreadsheetId(openingsQueue.getId());
+  ensureHeaders_(getOrCreateSheet_(openingsQueue, SHEET_NAMES.openingsQueue), OPENINGS_QUEUE_HEADERS);
+
+  var openingsResults = createSpreadsheetInFolder_('Openings Results', folder.getId());
+  setOpeningsResultsSpreadsheetId(openingsResults.getId());
+  ensureHeaders_(getOrCreateSheet_(openingsResults, SHEET_NAMES.openingsResults), OPENINGS_RESULTS_HEADERS);
+
   // Archives meta index (points to per-month spreadsheets)
   var archivesMeta = createSpreadsheetInFolder_('Archives Meta', folder.getId());
   setArchivesMetaSpreadsheetId(archivesMeta.getId());

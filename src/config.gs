@@ -54,6 +54,12 @@ function getCallbacksQueueSpreadsheetId() { return getSpreadsheetId_(PROP_KEYS.c
 function setCallbacksResultsSpreadsheetId(id) { setSpreadsheetId_(PROP_KEYS.callbacksResultsSpreadsheetId, id); }
 function getCallbacksResultsSpreadsheetId() { return getSpreadsheetId_(PROP_KEYS.callbacksResultsSpreadsheetId); }
 
+function setOpeningsQueueSpreadsheetId(id) { setSpreadsheetId_(PROP_KEYS.openingsQueueSpreadsheetId, id); }
+function getOpeningsQueueSpreadsheetId() { return getSpreadsheetId_(PROP_KEYS.openingsQueueSpreadsheetId); }
+
+function setOpeningsResultsSpreadsheetId(id) { setSpreadsheetId_(PROP_KEYS.openingsResultsSpreadsheetId, id); }
+function getOpeningsResultsSpreadsheetId() { return getSpreadsheetId_(PROP_KEYS.openingsResultsSpreadsheetId); }
+
 function setOpsSpreadsheetId(id) { setSpreadsheetId_(PROP_KEYS.opsSpreadsheetId, id); }
 function getOpsSpreadsheetId() { return getSpreadsheetId_(PROP_KEYS.opsSpreadsheetId); }
 
