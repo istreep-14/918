@@ -1,6 +1,7 @@
 Option B: Simple Chess.com → Google Sheets (Control + Archives + Active)
 
 Overview
+- See `DATA_DICTIONARY.md` for a full description of every header and performance notes (including headers not used in Option B but available for future expansion).
 - Purpose: Pull Chess.com monthly archives for a user, normalize games in memory, and write in two places:
   - Active spreadsheet (current month only)
   - Archives spreadsheet (all past months)
