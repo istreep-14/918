@@ -14,8 +14,8 @@ Key Goals
 - A clean, restartable backfill
 
 Quick Start
-1) Edit `CONFIG.gs`: set `CONFIG.username` (and optionally `timezone`, `projectName`).
-2) Run `applyConfigToProperties()`.
+1) Single call config: `setConfig({ username: 'your_name', projectName: 'Chess Option B', timezone: 'America/New_York' })`
+2) Or manual: edit `CONFIG.gs` and run `applyConfigToProperties()`.
 3) Run `setupOptionB()` to create the Drive folder and three spreadsheets and populate the `ArchivesList`.
 4) Run `backfillAllArchives()` to fetch each month and write rows:
    - active month → `Active/ActiveGames`

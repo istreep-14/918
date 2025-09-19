@@ -12,10 +12,11 @@ function setupProject() {
 
 function simpleSetup(username) {
   // Convenience wrapper to set username and run Option B setup
-  if (typeof CONFIG !== 'undefined' && username) {
-    try { CONFIG.username = String(username); } catch (e) {}
+  if (typeof setConfig === 'function' && username) {
+    try { setConfig({ username: String(username) }); } catch (e) {}
+  } else if (typeof applyConfigToProperties === 'function') {
+    applyConfigToProperties();
   }
-  if (typeof applyConfigToProperties === 'function') applyConfigToProperties();
   return setupOptionB();
 }
 
