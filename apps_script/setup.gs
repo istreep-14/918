@@ -98,10 +98,33 @@ function quickSetup(username, folderName) {
   return setupProjectWithRange(folderName || 'Chess Sheets', new Date().getFullYear(), new Date().getFullYear());
 }
 
+// ------------------------------
+// Simplified one-call setup
+// ------------------------------
+
+function simpleSetup(username, folderName) {
+  if (!username) throw new Error('Username is required');
+  // Set both USERNAME and MY_USERNAME to the provided username
+  setUsernames(username, username);
+  // Create Control spreadsheet, tabs, and default folder
+  if (folderName) {
+    setupProjectWithRange(folderName, new Date().getFullYear(), new Date().getFullYear());
+  } else {
+    setupProject();
+  }
+  // Determine current active month from archives and ensure monthly spreadsheet exists
+  bootstrapFromArchivesList_();
+  return {
+    controlSpreadsheetId: PropertiesService.getDocumentProperties().getProperty(PROP_KEYS.CONTROL_SPREADSHEET_ID),
+    activeMonth: getActiveMonth_()
+  };
+}
+
 function onOpen() {
   try {
     var ui = SpreadsheetApp.getUi();
     ui.createMenu('Chess Pipeline')
+      .addItem('One-click Setup', 'oneClickSetupPrompt_')
       .addItem('Setup Project (default)', 'setupProject')
       .addSeparator()
       .addItem('Ingest Active Month', 'ingestActiveMonthOnce')
@@ -118,4 +141,14 @@ function menuSeedDailyTotals_() {
   var yyyy = active.substring(0,4);
   var mm = active.substring(5,7);
   seedDailyTotalsForNewMonth_(yyyy, mm);
+}
+
+function oneClickSetupPrompt_() {
+  var ui = SpreadsheetApp.getUi();
+  var res = ui.prompt('One-click Setup', 'Enter your Chess.com username:', ui.ButtonSet.OK_CANCEL);
+  if (res.getSelectedButton() !== ui.Button.OK) return;
+  var username = (res.getResponseText() || '').trim();
+  if (!username) { ui.alert('Username is required.'); return; }
+  var out = simpleSetup(username);
+  ui.alert('Setup complete for ' + username + '. Active month: ' + out.activeMonth);
 }
