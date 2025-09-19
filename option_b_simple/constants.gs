@@ -15,7 +15,8 @@ var PROP_KEYS = {
 var SHEET_NAMES = {
   ArchivesList: 'ArchivesList',
   ArchiveGames: 'ArchiveGames',
-  ActiveGames: 'ActiveGames'
+  ActiveGames: 'ActiveGames',
+  DailyTotals: 'DailyTotals'
 };
 
 var ARCHIVES_HEADERS = [ 'year','month','archive_url','status','list_etag','month_etag','last_checked_iso','api_game_count_last','sheet_game_count','last_url_api','last_url_seen' ];
@@ -28,6 +29,16 @@ var GAME_HEADERS = [
   'player.username','player.color','player.rating','player.rating_last','player.rating_change','player.outcome','player.score',
   'opponent.username','opponent.color','opponent.rating','opponent.rating_last','opponent.rating_change','opponent.outcome','opponent.score',
   'end_reason','rating_is_exact'
+];
+
+// Daily totals headers (bullet/blitz/rapid only, plus overall)
+var DAILY_TOTALS_HEADERS = [
+  'date',
+  'bullet.wins','bullet.losses','bullet.draws','bullet.rating_start','bullet.rating_end','bullet.rating_change','bullet.duration_seconds',
+  'blitz.wins','blitz.losses','blitz.draws','blitz.rating_start','blitz.rating_end','blitz.rating_change','blitz.duration_seconds',
+  'rapid.wins','rapid.losses','rapid.draws','rapid.rating_start','rapid.rating_end','rapid.rating_change','rapid.duration_seconds',
+  'overall.wins','overall.losses','overall.draws','overall.rating_change','overall.duration_seconds',
+  'overall.rating_start','overall.rating_end'
 ];
 
 var APIS = {

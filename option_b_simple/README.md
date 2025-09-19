@@ -19,6 +19,7 @@ Quick Start
 4) Run `backfillAllArchives()` to fetch each month and write rows:
    - active month → `Active/ActiveGames`
    - inactive months → `Archives/ArchiveGames`
+5) Daily totals: when new games are added to Active, the `Active/DailyTotals` tab is updated only for the dates impacted.
 
 What gets created
 - Drive folder named from `CONFIG.projectName` (defaults to `Chess Option B`).
@@ -29,4 +30,5 @@ What gets created
 Why this shape
 - Splitting Active vs Archives keeps the hot sheet small and fast while preserving a single, simple location for historical data.
 - A single transform pipeline builds 2D arrays for setValues() in one shot per destination, which is faster and less error-prone.
+ - Daily totals track bullet/blitz/rapid only; Overall includes wins/losses/draws, duration, and approximated start/end-of-day ratings (averaged from formats when available).
 

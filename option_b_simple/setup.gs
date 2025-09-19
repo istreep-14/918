@@ -24,6 +24,7 @@ function ensureProject_() {
   ensureHeaders_(getOrCreateSheet_(ctl, SHEET_NAMES.ArchivesList), ARCHIVES_HEADERS);
   ensureHeaders_(getOrCreateSheet_(arch, SHEET_NAMES.ArchiveGames), GAME_HEADERS);
   ensureHeaders_(getOrCreateSheet_(act, SHEET_NAMES.ActiveGames), GAME_HEADERS);
+  ensureHeaders_(getOrCreateSheet_(act, SHEET_NAMES.DailyTotals), DAILY_TOTALS_HEADERS);
 
   return { rootId: root.getId(), controlId: ctl.getId(), archivesId: arch.getId(), activeId: act.getId() };
 }

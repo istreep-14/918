@@ -12,6 +12,7 @@ Workflow (Option B)
    - The code fetches each monthly archive once, transforms all games in memory (single pipeline), then writes in bulk to:
      - Active month → Active spreadsheet (`ActiveGames`)
      - Inactive months → Archives spreadsheet (`ArchiveGames`)
+   - If new rows are appended to Active, the `DailyTotals` tab is recomputed only for affected dates (bullet, blitz, rapid, plus overall).
 
 4) Refresh (optional)
    - Re-run `setupOptionB()` periodically to refresh the `ArchivesList`.

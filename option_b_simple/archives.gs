@@ -40,9 +40,12 @@ function backfillAllArchives(){
   function buildUrlIdx_(sheet){ var lr=sheet.getLastRow(); if(lr<2) return {}; var urls=sheet.getRange(2,1,lr-1,1).getValues(); var idx={}; for(var i=0;i<urls.length;i++){ var u=urls[i][0]; if(u) idx[u]=true; } return idx; }
   var idxArchive=buildUrlIdx_(shArchive); var idxActive=buildUrlIdx_(shActive);
 
-  var total=0; for(var r=0;r<rows.length;r++){ var yyyy=String(rows[r][yI]), mm=String(rows[r][mI]); var status=String(rows[r][statusI]||'inactive'); var res=fetchMonth_(yyyy,mm); var apiGames=0, lastUrl=''; if(res.status!==304 && res.status>=200 && res.status<300 && res.json && res.json.games){ var games=res.json.games||[]; apiGames=games.length; lastUrl=apiGames?games[apiGames-1].url:''; var out=transformAll_(games); var dest=(status==='active')?shActive:shArchive; var idx=(status==='active')?idxActive:idxArchive; var append=[]; for(var i=0;i<out.length;i++){ var u=out[i][0]; if(!u||idx[u]) continue; append.push(out[i]); idx[u]=true; } if(append.length){ writeRowsAppend_(dest, GAME_HEADERS, append); total+=append.length; } }
+  var total=0; var affectedDatesSet={}; for(var r=0;r<rows.length;r++){ var yyyy=String(rows[r][yI]), mm=String(rows[r][mI]); var status=String(rows[r][statusI]||'inactive'); var res=fetchMonth_(yyyy,mm); var apiGames=0, lastUrl=''; if(res.status!==304 && res.status>=200 && res.status<300 && res.json && res.json.games){ var games=res.json.games||[]; apiGames=games.length; lastUrl=apiGames?games[apiGames-1].url:''; var out=transformAll_(games); var dest=(status==='active')?shActive:shArchive; var idx=(status==='active')?idxActive:idxArchive; var append=[]; for(var i=0;i<out.length;i++){ var u=out[i][0]; if(!u||idx[u]) continue; append.push(out[i]); idx[u]=true; if(status==='active'){ var endIso=out[i][GAME_HEADERS.indexOf('end_time')]; var dk=(endIso?String(endIso).substring(0,10):''); if(dk) affectedDatesSet[dk]=true; } } if(append.length){ writeRowsAppend_(dest, GAME_HEADERS, append); total+=append.length; } }
     rows[r][apiCountI]=apiGames; rows[r][sheetCountI]=(status==='active'?Math.max(0, shActive.getLastRow()-1):Math.max(0, shArchive.getLastRow()-1)); rows[r][lastUrlApiI]=lastUrl; rows[r][lastUrlSeenI]=lastUrl; }
   shLedger.getRange(2,1,rows.length,headers.length).setValues(rows);
+  // Refresh daily totals for affected dates if we appended to Active
+  var dates = Object.keys(affectedDatesSet);
+  if (dates.length) refreshDailyTotalsForDates_(dates);
   return total;
 }
 
