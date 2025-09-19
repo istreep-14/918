@@ -103,11 +103,13 @@ function onOpen() {
     var ui = SpreadsheetApp.getUi();
     ui.createMenu('Chess Pipeline')
       .addItem('Setup Project (default)', 'setupProject')
+      .addItem('Simple Setup (single control file)', 'setupSimple')
       .addSeparator()
       .addItem('Ingest Active Month', 'ingestActiveMonthOnce')
       .addItem('Finalize Previous Month If Ready', 'finalizePreviousMonthIfReady_')
       .addItem('Health Check', 'writeHealth_')
       .addSeparator()
+      .addItem('Fetch Archive List (Simple)', 'fetchArchiveListToSheetSimple')
       .addItem('Seed Daily Totals (this month)', 'menuSeedDailyTotals_')
       .addToUi();
   } catch (e) {}
